@@ -1,0 +1,55 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "tsx --watch src/server.ts",
+    "dev": "tsc --watch & nodemon dist/server.js",
+    "launch": "tsc && start node dist/server.js",
+    "build": "tsc",
+    "lint": "eslint ./src ",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "copy": "npx copy-files-from-to",
+    "stuck": "echo '  Proto  Local Address          Foreign Address        State           PID' & netstat -a -o -n | grep '3035' & echo taskkill /f /pid"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.1",
+    "@types/md5": "^2.3.5",
+    "@types/node": "^18.0.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "nodemon": "^3.1.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.11.0"
+  },
+  "dependencies": {
+    "@types/node": "^22.7.9",
+    "@types/node-fetch": "^2.6.11",
+    "@types/sql.js": "^1.4.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "md5": "^2.3.0",
+    "newsapi": "^2.4.1",
+    "node-fetch": "^3.3.2",
+    "sql.js": "^1.11.0"
+  },
+  "copyFiles": [
+    {
+      "from": "./node_modules/sql.js/dist/sql-wasm.wasm",
+      "to": "./src/components/database/assets"
+    },
+    {
+      "from": "./src/components/database/assets/**",
+      "to": "./dist/components/database/assets/"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./packages/mobile-client" },
+    { "path": "./packages/web-client" },
+    { "path": "./packages/server-backend" },
+    { "path": "./packages/server-dashboard" },
+    { "path": "./shared" }
+  ]
+}

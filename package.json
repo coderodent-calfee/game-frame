@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "dev": "turbo run launch",
+    "build": "turbo run build-all",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.4",
+    "typescript": "^5.7.2"
+  }
+}

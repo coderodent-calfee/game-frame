@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                     // Use the latest JavaScript features
+    "module": "ESNext",                     // Module resolution for ES modules
+    "lib": ["DOM", "DOM.Iterable", "ESNext"], // Include DOM and ESNext for web and Node.js environments
+    "skipLibCheck": true,                   // Skip type checking of declaration files to speed up compilation
+    "strict": true,                         // Enable strict type-checking
+    "moduleResolution": "Node",             // Resolve modules the same way Node.js does
+    "resolveJsonModule": true,              // Allow importing of JSON files
+    "isolatedModules": true,                // Isolated module compilation (important for React Native)
+    "jsx": "react-jsx",                     // JSX transformation mode for React (for React web and Native)
+    "baseUrl": ".",                         // Base path for relative imports
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+	"paths": {
+      "@server-backend/*": ["packages/server-backend/src/*"],
+      "@web-client/*": ["packages/web-client/src/*"],
+      "@react-native-client/*": ["packages/react-native-client/src/*"],
+      "@dashboard/*": ["packages/dashboard/src/*"]
+    }
+  },
+  "include": [
+    "packages/**/*" // Include all source files in the packages directory
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "pipeline": {
+    "build-all": {
+      "outputs": ["dist/**"]
+    },
+    "launch": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "test": {}
+  }
+}
