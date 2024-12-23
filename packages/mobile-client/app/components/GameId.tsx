@@ -1,55 +1,107 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import clientLog from '../../utils/clientLog';
 
 // Rainbow colors for each character
-const colors = ['#FF0000', '#FF7F00', '#CCCC00', '#00FF00', '#0000FF', '#4B0082'];
+const colors = ['#FF0000', '#FF7F00', '#CCCC00', '#00CC00', '#0000FF', '#4B0082'];
 
 interface GameIdProps {
     gameId?: string;
 }
 
 const GameId: React.FC<GameIdProps> = ({ gameId }) => {
+    const [display, setDisplay] = useState<string[]>(new Array(6).fill(''));
     const [input, setInput] = useState<string[]>(new Array(6).fill(''));
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    console.log(`render input ${input}`);
 
     // Update input when gameId is provided
     useEffect(() => {
         if (gameId && gameId.length === 6) {
-            setInput(gameId.split(''));
+            setDisplay(gameId.split(''));
         }
     }, [gameId]);
 
-    const handleChange = (text: string, index: number) => {
-        console.warn(`handleChange ${input} => ${text}`);
+    const handleInput = (newValue: string, index : number) => {
+        const lastChar = newValue.slice(-1);
+        if (false === /[A-Z0-9]/.test(lastChar.toUpperCase())) {
+            return;
+        }
+        console.log(`handleInput ${input} at ${index} <= ${lastChar}`);
+        const newInput = [...input];
+        newInput[index] = lastChar.toUpperCase();
+        setInput(newInput);
+        handleDebouncedUpdate(newInput, index);
     };
     
-    const handleKeyPress = (e: any, index: number) => {
-        // Detect if the key pressed is a valid character
-        const key = e.nativeEvent.key;
-        if (key.length === 1 && /[A-Z0-9]/.test(key.toUpperCase())) {
-            const updatedInput = [...input];
-            updatedInput[index] = key.toUpperCase(); // Enforce uppercase
-            setInput(updatedInput);
-
-            // Move to the next input if this one is filled
+    const handleDebouncedUpdate = (newInput: string[], index : number) => {
+        if (debounceTimer.current) {
+            // If debounce is already in flight, do nothing
+            return;
+        }
+        console.log(`handleDebouncedUpdate input ${input} newInput ${newInput} index ${index}`);
+        const move = () => {        // Move to the next input if this one is filled
             if (index < 5) {
                 const nextInput = document.getElementById(`input-${index + 1}`);
                 if (nextInput) {
                     nextInput.focus();
                 }
             }
-        } else if (key === 'Backspace' || key === 'ArrowLeft') {
-            // If backspace or left arrow, focus on the previous input
-            if (index > 0) {
-                const prevInput = document.getElementById(`input-${index - 1}`);
-                if (prevInput) {
-                    prevInput.focus();
-                }
-            }
+        };
+        // Set the debounce timer
+        debounceTimer.current = setTimeout(() => {
+            debounceTimer.current = null; // Reset debounce
+            console.log(`timeout display ${display} input ${input}`);
+            setDisplay(newInput);
+            move();
+        }, 150); // Adjust delay as needed
+    };
+
+    const handleChange = (e: any, index:number) => {
+        const newValue = e.target.value;
+        console.log(`handleChange ${input} at ${index} <= ${newValue}`);
+        handleInput(newValue, index);        
+    };
+    
+    // on the TV this is the _only_ callback
+    // on the mobile e.nativeEvent.key is Undefined (Backspace works)
+    // on the web this is called first
+    const handleKeyPress = (e: any, index: number) => {
+        const key = e.nativeEvent.key;
+        console.warn(`handleKeyPress ${e.nativeEvent.key} at ${index}`);
+        if(key.len !== 1){
+            return;
         }
+        const newValue = `${key}`;
+        handleInput(newValue, index);
+
+        // // Detect if the key pressed is a valid character
+        // if (key.length === 1 && /[A-Z0-9]/.test(key.toUpperCase())) {
+        //     const updatedInput = [...input];
+        //     updatedInput[index] = key.toUpperCase(); // Enforce uppercase
+        //     setInput(updatedInput);
+        //
+        //     // Move to the next input if this one is filled
+        //     if (index < 5) {
+        //         const nextInput = document.getElementById(`input-${index + 1}`);
+        //         if (nextInput) {
+        //             nextInput.focus();
+        //         }
+        //     }
+        // } else if (key === 'Backspace' || key === 'ArrowLeft') {
+        //     // If backspace or left arrow, focus on the previous input
+        //     if (index > 0) {
+        //         const prevInput = document.getElementById(`input-${index - 1}`);
+        //         if (prevInput) {
+        //             prevInput.focus();
+        //         }
+        //     }
+        // }
     };
     return (
         <View style={styles.container}>
-            {input.map((char, index) => (
+            {display.map((char, index) => (
                 gameId ? (
                     // If gameId is provided, show the rainbow-colored character
                     <View
@@ -62,12 +114,14 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
                         key={index}
                         id={`input-${index}`}
                         style={[styles.input, { borderColor: colors[index] }]}
-                        maxLength={1}
-                        value={char}
-                        onChangeText={(text) => handleChange(text, index)}
+                        onChange={(e) => handleChange(e, index)}
                         onKeyPress={(e) => handleKeyPress(e, index)}
                         keyboardType="default"
                         textAlign="center"
+                        // not sure these work right
+                        maxLength={1}
+                        value={char}
+                        
                     />
                 )
             ))}

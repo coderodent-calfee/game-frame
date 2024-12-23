@@ -1,10 +1,34 @@
-﻿import React from 'react';
-import {Dimensions, StyleSheet, Text, View, Image } from "react-native";
+﻿import React, {useState} from 'react';
+import {Dimensions, StyleSheet, Text, TextInput, View, Image } from "react-native";
 import GameId from "@/app/components/GameId";
 import rwcImage from '../../assets/images/rwc.png'
+import clientLog from "@/utils/clientLog";
 
 
 const App: React.FC = () => {
+    const [input, setInput] = useState<string>('');
+
+    const handleChangeText = (text: string) => {
+        const newInput = input + ` hct ${text}`
+        console.error(`handleChangeText ${text}`);
+        setInput(newInput);
+    };
+
+    const handleChange = (e: any) => {
+        const value = e.target.value;
+        console.error(`handleChange ${value}`);
+        const newInput = input + ` hc ${value}`
+        setInput(newInput);
+    };
+
+    const handleKeyPress = (e: any) => {
+        const key = e.nativeEvent.key;
+        console.error(`handleKeyPress ${key}`);
+        const newInput = input + ` hkp ${key}`
+        setInput(newInput);
+    };
+    
+    
     return (
         <View style={styles.header}>
             <View className="App-header grid-container" style={styles.container}>
@@ -23,6 +47,13 @@ const App: React.FC = () => {
                 <View className="content">
                     <GameId gameId="AB12CD"/>
                     <GameId/>
+                    <TextInput style={styles.input}
+                               onChange={(e) => handleChange(e)}
+                               onChangeText={(text) => handleChangeText(text)}
+                               onKeyPress={(e) => handleKeyPress(e)}
+                               keyboardType="default"
+                    />
+                    <Text  style={styles.input}>{input}</Text>
                 </View>
             </View>
         </View>
@@ -36,10 +67,10 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
-//        alignItems: 'center',
         justifyContent: 'center',
         fontSize: 10 + 2 * Math.min(Dimensions.get('window').width, Dimensions.get('window').height) / 100,
         color: 'white', // Text color is set in `Text`, not the container
+        width: '100%',
     },
     container: {
         flex: 1,
@@ -52,15 +83,25 @@ const styles = StyleSheet.create({
     right: { flex: 1, backgroundColor: 'lightgoldenrodyellow' },
     bottom: { flex: 1, backgroundColor: 'lightgrey' },
     image: {
-        width: 200,  // Specify the width of the image
-        height: 200, // Specify the height of the image
-        resizeMode: 'contain', // Ensures the image scales properly within the specified dimensions
+        maxWidth: Dimensions.get('window').width/4,
+        width: 100,  // Specify the width of the image
+        height: 100, // Specify the height of the image
     },
     icon: {
         gridArea: 'icon',
         width: '100%',
         boxSizing: 'border-box',        
     },
+    input: {
+        fontSize: 30,
+        borderWidth: 2,
+        margin: 5,
+        borderRadius: 10,
+        textAlign: 'center',
+        color: 'white',
+    },
 });
 
 export default App;
+
+
