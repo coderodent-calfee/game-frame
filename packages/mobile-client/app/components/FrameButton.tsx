@@ -8,13 +8,13 @@ interface FrameButtonProps {
     height?: number; // Optional height
 }
 
-const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress, width = 100, height = 50 }) => {
+const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress, width = 'auto', height = 'auto' }) => {
     return (
         <TouchableOpacity
             style={[styles.button, { width, height }]}
             onPress={onPress}
         >
-            <Text style={styles.buttonText}>{title}</Text>
+            <Text style={styles.buttonText} numberOfLines={1}>{title}</Text>
         </TouchableOpacity>
     );
 };
@@ -30,9 +30,12 @@ const styles = StyleSheet.create({
         borderColor: 'white',
     },
     buttonText: {
+        marginRight: 2,
+        marginLeft: 2,
         fontSize: 30,
         color: 'white',
         fontWeight: 'bold',
+        flexShrink: 1,
     },
 });
 

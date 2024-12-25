@@ -6,7 +6,8 @@ export default function RootLayout() {
     headerStyle: { backgroundColor: "#333333" }, // Customize header background
     headerTintColor: "#FFF", // Text color in the header
     headerTitleAlign: "center"}} >
-    <Stack.Screen name="index" options={{ title: "Tutti-Frutti" }} />
-    <Stack.Screen name="home" options={{ title: "Home" }} />
+    <Stack.Screen name="index" options={{ title: "Game-Frame" }} />
+    <Stack.Screen name="lobby" options={{ title: "Lobby" }} />
+    <Stack.Screen name="lfg" options={{ title: "Looking For Game" }} />
   </Stack>;
 }
