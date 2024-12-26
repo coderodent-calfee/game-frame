@@ -29,24 +29,24 @@ const PageLayout: React.FC<PageLayoutProps> = ({
     cornerSize = cornerSize ?? 200;
     
     return (
-        <View style={styles.container}>
+        <View style={styles.container}  className="PageLayoutContainer">
             {/* Header */}
-            <View style={[styles.header, { height: {cornerSize} }] } >
-                { topLeftCorner && <View style={[styles.headerSide, { width: {cornerSize} }] }>{topLeftCorner}</View>}
-                { topContent && <View style={styles.headerCenter}>{topContent}</View>}
-                { topRightCorner && <View style={[styles.headerSide, { width: {cornerSize} }] }>{topRightCorner}</View>}
+            <View className="PageLayoutHeader" style={[styles.header, { height: cornerSize }] } >
+                { topLeftCorner &&  <View id="page-layout-top-left" style={[styles.headerSide, { width: cornerSize }] }>{topLeftCorner}</View>}
+                { topContent &&     <View id="page-layout-top" style={styles.headerCenter}>{topContent}</View>}
+                { topRightCorner && <View id="page-layout-top-right" style={[styles.headerSide, { width: cornerSize }] }>{topRightCorner}</View>}
             </View>
 
             {/* Body */}
             <View style={styles.body}>
-                {leftSideContent && <View style={[styles.header, { width: {cornerSize} }] }>{leftSideContent}</View>}
+                {leftSideContent && <View id="page-layout-left" style={[styles.side, { width: cornerSize }] }>{leftSideContent}</View>}
                 <View style={styles.central}>{centralContent}</View>
-                {rightSideContent && <View style={[styles.header, { width: {cornerSize} }] }>{rightSideContent}</View>}
+                {rightSideContent && <View id="page-layout-right" style={[styles.side, { width: cornerSize }] }>{rightSideContent}</View>}
             </View>
-            <View style={[styles.header, { height: {cornerSize} }] }>
-                { bottomLeftCorner && <View style={[styles.headerSide, { width: {cornerSize} }] }>{bottomLeftCorner}</View>}
-                { bottomContent && <View style={styles.headerCenter}>{bottomContent}</View>}
-                { bottomRightCorner && <View style={[styles.headerSide, { width: {cornerSize} }] }>{bottomRightCorner}</View>}
+            <View style={[styles.header, { height: cornerSize }] }>
+                { bottomLeftCorner &&  <View id="page-layout-bottom-left" style={[styles.headerSide, { width: cornerSize }] }>{bottomLeftCorner}</View>}
+                { bottomContent &&     <View id="page-layout-bottom" style={styles.headerCenter}>{bottomContent}</View>}
+                { bottomRightCorner && <View id="page-layout-bottom-right" style={[styles.headerSide, { width: cornerSize }] }>{bottomRightCorner}</View>}
             </View>
 
         </View>
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     },
     side: {
         backgroundColor: '#444',
+        alignItems: 'flex-start',
     },
     central: {
         flex: 1,

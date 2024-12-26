@@ -4,16 +4,11 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 interface FrameButtonProps {
     title: string;
     onPress: () => void;
-    width?: number; // Optional width
-    height?: number; // Optional height
 }
 
-const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress, width = 'auto', height = 'auto' }) => {
+const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress}) => {
     return (
-        <TouchableOpacity
-            style={[styles.button, { width, height }]}
-            onPress={onPress}
-        >
+        <TouchableOpacity style={styles.button} onPress={onPress} >
             <Text style={styles.buttonText} numberOfLines={1}>{title}</Text>
         </TouchableOpacity>
     );
@@ -34,7 +29,6 @@ const styles = StyleSheet.create({
         marginLeft: 2,
         fontSize: 30,
         color: 'white',
-        fontWeight: 'bold',
         flexShrink: 1,
     },
 });
