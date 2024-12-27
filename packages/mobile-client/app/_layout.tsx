@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import { AppProvider } from "@/utils/AppContext";
+import Game from "@/app/game";
 
 export default function RootLayout() {
     const screenOptions={

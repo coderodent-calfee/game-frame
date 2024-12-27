@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 interface FrameButtonProps {
@@ -6,9 +6,9 @@ interface FrameButtonProps {
     onPress: () => void;
 }
 
-const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress}) => {
+const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress}, ref) => {
     return (
-        <TouchableOpacity style={styles.button} onPress={onPress} >
+        <TouchableOpacity ref={ref} style={styles.button} onPress={onPress} >
             <Text style={styles.buttonText} numberOfLines={1}>{title}</Text>
         </TouchableOpacity>
     );
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default FrameButton;
+export default forwardRef(FrameButton);

@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { TextInput, Text, View, StyleSheet } from 'react-native';
 
-const PlayerNameComponent = ({ player, setPlayerInfo }: { player: { name: string | null }, setPlayerInfo: (info: { name: string }) => void }) => {
+const PlayerNameComponent = ({ player, setPlayerName }: { player: { name: string | null }, setPlayerName: (info: { name: string }) => void }) => {
     const [nameInput, setNameInput] = useState<string>(player.name || '');
 
     useEffect(() => {
@@ -15,10 +15,7 @@ const PlayerNameComponent = ({ player, setPlayerInfo }: { player: { name: string
     };
 
     const handleNameSubmit = () => {
-        console.log("handleNameSubmit:", nameInput );
-        if (nameInput.trim()) {
-            setPlayerInfo((prevState) => ({...prevState, name: nameInput}));
-        }
+        setPlayerName({name : nameInput});
     };
     return (
         <View style={styles.container}>

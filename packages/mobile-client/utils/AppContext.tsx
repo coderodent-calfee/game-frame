@@ -15,10 +15,11 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Create a provider component
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string>(generateSessionId());
     const [playerInfo, setPlayerInfo] = useState<any>({});
-
+    
     const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
+
     
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
@@ -28,14 +29,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const loadData = async () => {
-            const storedSessionId = await storage.getItem ? storage.getItem('sessionId') : localStorage.getItem('sessionId');
-            if (storedSessionId) {
-                setSessionId(storedSessionId);
-            } else {
-                const generatedSessionId = generateSessionId();
-                setSessionId(generatedSessionId);
-            }
-
             const storedPlayerInfo = await (storage.getItem ? storage.getItem('playerInfo') : JSON.parse(localStorage.getItem('playerInfo') || '{}'));
             if (storedPlayerInfo) {
                 console.log(`loaded stored player ${storedPlayerInfo}`);
@@ -49,19 +42,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const saveData = async () => {
             await (storage.setItem
-                    ? storage.setItem('sessionId', sessionId || '')
-                    : localStorage.setItem('sessionId', sessionId || '')
-            );
-            await (storage.setItem
                     ? storage.setItem('playerInfo', JSON.stringify(playerInfo))
                     : localStorage.setItem('playerInfo', JSON.stringify(playerInfo))
             );
         };
 
-        if (sessionId && playerInfo) {
+        if (playerInfo) {
             saveData();  // Save data if sessionId or playerInfo changes
         }
-    }, [sessionId, playerInfo]);
+    }, [playerInfo]);
     
     return (
         <AppContext.Provider className="myContext" value={{ sessionId, setSessionId, playerInfo, setPlayerInfo }}>
