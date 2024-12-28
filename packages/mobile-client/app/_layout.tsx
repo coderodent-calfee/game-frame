@@ -14,8 +14,8 @@ export default function RootLayout() {
       <AppProvider>
           <Stack screenOptions={screenOptions} >
               <Stack.Screen name="index" options={{ title: "Game-Frame" }} />
-              <Stack.Screen name="lobby" options={{ title: "Lobby" }} />
-              <Stack.Screen name="lfg" options={{ title: "Looking For Game" }} />
+              <Stack.Screen name="game/[gameId]/index" options={{ title: "Game" }} />
+              <Stack.Screen name="game/index" options={{ title: "Looking For Game" }} />
           </Stack>
       </AppProvider> );
 }

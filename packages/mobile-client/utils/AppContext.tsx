@@ -6,8 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // For Rea
 interface AppContextType {
     sessionId: string | null;
     setSessionId: (id: string | null) => void;
-    playerInfo: any;
-    setPlayerInfo: (info: any) => void;
+    userInfo: any;
+    setUserInfo: (info: any) => void;
 }
 
 // Create the context
@@ -16,10 +16,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Create a provider component
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [sessionId, setSessionId] = useState<string>(generateSessionId());
-    const [playerInfo, setPlayerInfo] = useState<any>({});
+    const [userInfo, setUserInfo] = useState<any>({});
     
     const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
-
     
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
@@ -29,10 +28,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const loadData = async () => {
-            const storedPlayerInfo = await (storage.getItem ? storage.getItem('playerInfo') : JSON.parse(localStorage.getItem('playerInfo') || '{}'));
-            if (storedPlayerInfo) {
-                console.log(`loaded stored player ${storedPlayerInfo}`);
-                setPlayerInfo(JSON.parse(storedPlayerInfo));
+            const storedUserInfo = await (storage.getItem ? storage.getItem('userInfo') : JSON.parse(localStorage.getItem('userInfo') || '{}'));
+            if (storedUserInfo) {
+                console.log(`loaded stored player ${storedUserInfo}`);
+                setUserInfo(JSON.parse(storedUserInfo));
             }
         };
 
@@ -42,18 +41,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const saveData = async () => {
             await (storage.setItem
-                    ? storage.setItem('playerInfo', JSON.stringify(playerInfo))
-                    : localStorage.setItem('playerInfo', JSON.stringify(playerInfo))
+                    ? storage.setItem('userInfo', JSON.stringify(userInfo))
+                    : localStorage.setItem('userInfo', JSON.stringify(userInfo))
             );
         };
 
-        if (playerInfo) {
-            saveData();  // Save data if sessionId or playerInfo changes
+        if (userInfo) {
+            saveData();  // Save data if sessionId or userInfo changes
         }
-    }, [playerInfo]);
+    }, [userInfo]);
     
     return (
-        <AppContext.Provider className="myContext" value={{ sessionId, setSessionId, playerInfo, setPlayerInfo }}>
+        <AppContext.Provider className="myContext" value={{ sessionId, setSessionId, userInfo: userInfo, setUserInfo: setUserInfo }}>
             {children}
         </AppContext.Provider>
     );

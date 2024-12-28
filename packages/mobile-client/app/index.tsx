@@ -5,27 +5,28 @@ import rwcImage from "@/assets/images/rwc.png";
 import FrameButton from "@/app/components/FrameButton";
 import PageLayout from "@/app/components/PageLayout";
 import {useAppContext} from "@/utils/AppContext";
-import PlayerNameComponent from "@/app/components/PlayerNameComponent";
-import socket from '../utils/socket';
-import {makePostRequest} from '../utils/requester'
+import UserNameComponent from "@/app/components/UserNameComponent";
+import socket from '@/utils/socket';
+import {makePostRequest} from '@/utils/requester'
 import {useNavigation} from "@react-navigation/native";
-import {Link} from "expo-router";
+import {Link, useRouter} from "expo-router";
 
 interface GameType {
     gameId: string;
 }
 
-interface PlayerType {
+interface UserType {
     playerId: string;
 }
 
 export default function Index() {
-    const {sessionId, playerInfo, setPlayerInfo} = useAppContext();
-    const [editPlayer, setEditPlayer] = useState<boolean>(true);
-    const navigation = useNavigation();
-
-    const toggleEditPlayer = () => {
-        setEditPlayer((prevState) => !prevState);
+    const {sessionId, userInfo, setUserInfo} = useAppContext();
+    const [editUser, setEditUser] = useState<boolean>(true);
+    //const navigation = useNavigation();
+    const router = useRouter();
+    
+    const toggleEditUser = () => {
+        setEditUser((prevState) => !prevState);
     };
 
     // Client socket communication
@@ -34,6 +35,7 @@ export default function Index() {
         socket.on('connect', () => {
             console.log('Connected with socket ID:', socket.id);
         });
+        
         socket.on('message', (data) => {
             console.log(`Received message:`, data);
         });
@@ -43,18 +45,28 @@ export default function Index() {
             socket.off('message');
         };
     }, []);
+    
     useEffect(() => {
         // When the client connects to the server
         console.log(`sessionId: ${sessionId}`);
-        socket.emit('clientConnected', {sessionId});
+        if(!sessionId){ return; }
+        
+        const sessionUserData : {sessionId:string, userName?:string} = {};
+        sessionUserData.sessionId = sessionId;
+        
+        // todo: send all the user information
+        if(userInfo.name && userInfo.name.length){
+            sessionUserData.userName = userInfo.name;
+        }
+        socket.emit('sessionUser', sessionUserData);
     }, [sessionId]);
 
     useEffect(() => {
-        console.log(`useEffect editPlayer:${editPlayer} playerInfo.name:${playerInfo.name}`)
-        if (playerInfo.name) {
-            setEditPlayer(false);
+        console.log(`useEffect editUser:${editUser} userInfo.name:${userInfo.name}`)
+        if (userInfo.name) {
+            setEditUser(false);
         }
-    }, [playerInfo]);
+    }, [userInfo]);
 
     const sendMessage = () => {
         const message = `Hello from ${sessionId}`;
@@ -62,46 +74,48 @@ export default function Index() {
         socket.emit('clientMessage', {message});
     };
 
-    const handlePlayerName = (info)=>{
-        console.warn("handlePlayerName ", info);
-        setPlayerInfo((prevState) => ({ ...prevState, ...info }));
+    const handleUserName = (info)=>{
+        console.warn("handleUserName ", info);
+        setUserInfo((prevState) => ({ ...prevState, ...info }));
     };
     
-    // const newGame = () => {
-    //     console.log(`newGame`);
-    //     if (!sessionId) {
-    //         console.warn(`newGame: no sessionId`);
-    //         return;
-    //     }
-    //     makePostRequest<GameType>('api/game/newGame', {sessionId})
-    //         .then((gameId) => {
-    //             console.log("newGame created:", gameId);
-    //             return makePostRequest<PlayerType>('api/game/joinGame', {gameId});
-    //         })
-    //         .then((playerId) => {
-    //             console.log("joinGame response:", playerId);
-    //         }).catch((error) => {
-    //         console.log("newGame failed:", error)
-    //     });
-    // }
+    const newGame = () => {
+        console.log(`newGame`);
+        if (!sessionId) {
+            console.warn(`newGame: no sessionId`);
+            return;
+        }
+        makePostRequest<GameType>('api/game/newGame', {sessionId})
+            .then((response) => {
+                console.log("newGame created:", response);
+                const gameId = response['game'].gameId;
+                return makePostRequest<UserType>(`api/game/${gameId}/join`, {sessionId});
+            })
+            .then((response) => {
+                console.log("joinGame response:", response);
+                const gameId = response['game'].gameId;
+                console.log("userInfo: ", userInfo);
+                
+                router.navigate(`game/${gameId}/`, {key:"Howdy"});
+            }).catch((error) => {
+                console.log("newGame failed:", error)
+        });
+    }
     return (
         <PageLayout
             cornerSize={120}
-            topLeftCorner={<View style={styles.icon}>
-                <Image source={rwcImage} style={styles.image}/>
+            topLeftCorner={<View id="top-left-corner-icon" style={styles.icon}>
+                <Image  id="top-left-corner-image" source={rwcImage} style={styles.image}/>
             </View>}
             topContent={
-                playerInfo.name && playerInfo.name.length && 
+                userInfo.name && userInfo.name.length && 
                 <View style={styles.rowFlow}>
-                    <Link href="/lfg" asChild>
+                    <Link href="/game" asChild>
                         <FrameButton title="Look For Game" onPress={() => {
                         }}></FrameButton>
                     </Link>
 
-                    <Link href="/lobby" asChild>
-                        <FrameButton title="Lobby" onPress={() => {
-                        }}></FrameButton>
-                    </Link>
+                    <FrameButton title="New Game" onPress={newGame}></FrameButton>
 
                     <FrameButton title="Send" onPress={sendMessage}></FrameButton>
 
@@ -110,17 +124,17 @@ export default function Index() {
             }
             topRightCorner={<Text style={styles.text}>Right Corner</Text>}
             leftSideContent={
-                playerInfo.name &&
+                userInfo.name &&
                 <View style={styles.columnFlow}>
-                    <Text style={styles.text}>Player:</Text>
-                    <FrameButton title={playerInfo.name} onPress={toggleEditPlayer}></FrameButton>
+                    <Text style={styles.text}>User:</Text>
+                    <FrameButton title={userInfo.name} onPress={toggleEditUser}></FrameButton>
                 </View>
             }
             centralContent={
                 <View style={styles.columnFlow}>
-                    {editPlayer && <PlayerNameComponent player={playerInfo} setPlayerName={handlePlayerName}/>}
-                    {!playerInfo.name &&
-                        <Text style={styles.text}>Every Player Must Have A Name</Text>}
+                    {editUser && <UserNameComponent user={userInfo} setUserName={handleUserName}/>}
+                    {!userInfo.name &&
+                        <Text style={styles.text}>Every User Must Have A Name</Text>}
                 </View>
             }
             bottomContent={<Text style={[styles.text, {fontSize: 30}]}>{sessionId}</Text>}

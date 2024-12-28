@@ -27,26 +27,26 @@ const PageLayout: React.FC<PageLayoutProps> = ({
                                                    bottomContent,
                                                }) => {
     cornerSize = cornerSize ?? 200;
-    
+    const cornerSizeStyle : number | string = 'auto';
     return (
         <View style={styles.container}  className="PageLayoutContainer">
             {/* Header */}
-            <View className="PageLayoutHeader" style={[styles.header, { height: cornerSize }] } >
-                { topLeftCorner &&  <View id="page-layout-top-left" style={[styles.headerSide, { width: cornerSize }] }>{topLeftCorner}</View>}
+            <View className="PageLayoutHeader" style={[styles.header, { height: cornerSizeStyle }] } >
+                { topLeftCorner &&  <View id="page-layout-top-left" style={[styles.headerSide, { width: cornerSizeStyle }] }>{topLeftCorner}</View>}
                 { topContent &&     <View id="page-layout-top" style={styles.headerCenter}>{topContent}</View>}
-                { topRightCorner && <View id="page-layout-top-right" style={[styles.headerSide, { width: cornerSize }] }>{topRightCorner}</View>}
+                { topRightCorner && <View id="page-layout-top-right" style={[styles.headerSide, { width: cornerSizeStyle }] }>{topRightCorner}</View>}
             </View>
 
             {/* Body */}
             <View style={styles.body}>
-                {leftSideContent && <View id="page-layout-left" style={[styles.side, { width: cornerSize }] }>{leftSideContent}</View>}
+                {leftSideContent && <View id="page-layout-left" style={[styles.side, { width: cornerSizeStyle }] }>{leftSideContent}</View>}
                 <View style={styles.central}>{centralContent}</View>
-                {rightSideContent && <View id="page-layout-right" style={[styles.side, { width: cornerSize }] }>{rightSideContent}</View>}
+                {rightSideContent && <View id="page-layout-right" style={[styles.side, { width: cornerSizeStyle }] }>{rightSideContent}</View>}
             </View>
-            <View style={[styles.header, { height: cornerSize }] }>
-                { bottomLeftCorner &&  <View id="page-layout-bottom-left" style={[styles.headerSide, { width: cornerSize }] }>{bottomLeftCorner}</View>}
+            <View style={[styles.header, { height: cornerSizeStyle }] }>
+                { bottomLeftCorner &&  <View id="page-layout-bottom-left" style={[styles.headerSide, { width: cornerSizeStyle }] }>{bottomLeftCorner}</View>}
                 { bottomContent &&     <View id="page-layout-bottom" style={styles.headerCenter}>{bottomContent}</View>}
-                { bottomRightCorner && <View id="page-layout-bottom-right" style={[styles.headerSide, { width: cornerSize }] }>{bottomRightCorner}</View>}
+                { bottomRightCorner && <View id="page-layout-bottom-right" style={[styles.headerSide, { width: cornerSizeStyle }] }>{bottomRightCorner}</View>}
             </View>
 
         </View>

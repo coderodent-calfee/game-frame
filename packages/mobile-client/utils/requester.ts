@@ -9,7 +9,6 @@ async function makeRequest<T>(url : string, requestOptions: object ) : Promise<T
     console.log("requestOptions:",requestOptions)
     return fetch(url, requestOptions)
         .then((response) => {
-            console.log(response)
             return response.json();
         }).catch((error) => {
             console.log(error)

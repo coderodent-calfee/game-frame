@@ -1,12 +1,12 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { TextInput, Text, View, StyleSheet } from 'react-native';
 
-const PlayerNameComponent = ({ player, setPlayerName }: { player: { name: string | null }, setPlayerName: (info: { name: string }) => void }) => {
-    const [nameInput, setNameInput] = useState<string>(player.name || '');
-
+const UserNameComponent = ({ user, setUserName }: { user: { name: string | null }, setUserName: (info: { name: string }) => void }) => {
+    
+    const [nameInput, setNameInput] = useState<string>(user.name || '');
     useEffect(() => {
-        setNameInput(player.name || ''); // Sync the input with player.name if available
-    }, [player.name]);
+        setNameInput(user.name || ''); // Sync the input with user.name if available
+    }, [user.name]);
 
     const handleNameChange = (text: string) => {
         console.log("handleNameChange:", text );
@@ -15,7 +15,7 @@ const PlayerNameComponent = ({ player, setPlayerName }: { player: { name: string
     };
 
     const handleNameSubmit = () => {
-        setPlayerName({name : nameInput});
+        setUserName({name : nameInput});
     };
     return (
         <View style={styles.container}>
@@ -25,7 +25,7 @@ const PlayerNameComponent = ({ player, setPlayerName }: { player: { name: string
                     value={nameInput}
                     onChangeText={handleNameChange}
                     onSubmitEditing={handleNameSubmit}
-                    placeholder="Enter Player Name"
+                    placeholder="Enter User Name"
                 />
             }
         </View>
@@ -53,4 +53,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default PlayerNameComponent;
+export default UserNameComponent;
