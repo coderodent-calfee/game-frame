@@ -1,15 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {Dimensions, Image, StyleSheet, Text, TextInput, View} from "react-native";
+import {StyleSheet, Text, View} from "react-native";
 
-import rwcImage from "@/assets/images/rwc.png";
 import FrameButton from "@/app/components/FrameButton";
 import PageLayout from "@/app/components/PageLayout";
 import {useAppContext} from "@/utils/AppContext";
 import UserNameComponent from "@/app/components/UserNameComponent";
-import socket from '@/utils/socket';
+import {socket, startSocket, handleSessionUser} from '@/utils/socket';
 import {makePostRequest} from '@/utils/requester'
 import {useNavigation} from "@react-navigation/native";
 import {Link, useRouter} from "expo-router";
+import Logo from "@/app/components/Logo";
 
 interface GameType {
     gameId: string;
@@ -30,35 +30,10 @@ export default function Index() {
     };
 
     // Client socket communication
-    useEffect(() => {
-        // When the client connects to the server
-        socket.on('connect', () => {
-            console.log('Connected with socket ID:', socket.id);
-        });
-        
-        socket.on('message', (data) => {
-            console.log(`Received message:`, data);
-        });
-
-        // Cleanup listener on unmount
-        return () => {
-            socket.off('message');
-        };
-    }, []);
+    useEffect(startSocket, []);
     
     useEffect(() => {
-        // When the client connects to the server
-        console.log(`sessionId: ${sessionId}`);
-        if(!sessionId){ return; }
-        
-        const sessionUserData : {sessionId:string, userName?:string} = {};
-        sessionUserData.sessionId = sessionId;
-        
-        // todo: send all the user information
-        if(userInfo.name && userInfo.name.length){
-            sessionUserData.userName = userInfo.name;
-        }
-        socket.emit('sessionUser', sessionUserData);
+        handleSessionUser(sessionId, userInfo);
     }, [sessionId]);
 
     useEffect(() => {
@@ -66,14 +41,21 @@ export default function Index() {
         if (userInfo.name) {
             setEditUser(false);
         }
+        handleSessionUser(sessionId, userInfo);
     }, [userInfo]);
 
     const sendMessage = () => {
         const message = `Hello from ${sessionId}`;
-        console.log(`sendMessage: ${message}`)
+        console.log(`sendMessage: ${message}`);
         socket.emit('clientMessage', {message});
     };
-
+    
+    const resetUser = () => {
+        console.log(`reset User:`);
+        setUserInfo({});
+        setEditUser(true);
+    };
+    
     const handleUserName = (info)=>{
         console.warn("handleUserName ", info);
         setUserInfo((prevState) => ({ ...prevState, ...info }));
@@ -103,10 +85,8 @@ export default function Index() {
     }
     return (
         <PageLayout
-            cornerSize={120}
-            topLeftCorner={<View id="top-left-corner-icon" style={styles.icon}>
-                <Image  id="top-left-corner-image" source={rwcImage} style={styles.image}/>
-            </View>}
+            cornerSize={150}
+            topLeftCorner={<Logo id="top-left-corner-icon"/>}
             topContent={
                 userInfo.name && userInfo.name.length && 
                 <View style={styles.rowFlow}>
@@ -118,6 +98,7 @@ export default function Index() {
                     <FrameButton title="New Game" onPress={newGame}></FrameButton>
 
                     <FrameButton title="Send" onPress={sendMessage}></FrameButton>
+                    <FrameButton title="Reset User" onPress={resetUser}></FrameButton>
 
                 </View>
 
@@ -146,12 +127,6 @@ const styles = StyleSheet.create({
     text: {
         color: 'white',
         fontSize: 30,
-    },
-    image: {
-        flex: 1,
-    },
-    icon: {
-        flex: 1,
     },
     rowFlow: {
         flex: 1,

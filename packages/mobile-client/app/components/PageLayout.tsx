@@ -26,13 +26,12 @@ const PageLayout: React.FC<PageLayoutProps> = ({
                                                    bottomRightCorner,
                                                    bottomContent,
                                                }) => {
-    cornerSize = cornerSize ?? 200;
-    const cornerSizeStyle : number | string = 'auto';
+    const cornerSizeStyle = cornerSize ?? 200;
     return (
         <View style={styles.container}  className="PageLayoutContainer">
             {/* Header */}
             <View className="PageLayoutHeader" style={[styles.header, { height: cornerSizeStyle }] } >
-                { topLeftCorner &&  <View id="page-layout-top-left" style={[styles.headerSide, { width: cornerSizeStyle }] }>{topLeftCorner}</View>}
+                { topLeftCorner &&  <View id="page-layout-top-left" style={[styles.headerSide, { width: cornerSizeStyle, height: cornerSizeStyle, paddingHorizontal: 0 }] }>{topLeftCorner}</View>}
                 { topContent &&     <View id="page-layout-top" style={styles.headerCenter}>{topContent}</View>}
                 { topRightCorner && <View id="page-layout-top-right" style={[styles.headerSide, { width: cornerSizeStyle }] }>{topRightCorner}</View>}
             </View>
@@ -63,7 +62,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: '#333',
-        paddingHorizontal: 10,
     },
     headerSide: {
         justifyContent: 'center',

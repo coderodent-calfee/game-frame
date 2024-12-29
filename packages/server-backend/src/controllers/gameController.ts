@@ -19,7 +19,7 @@ export const createGame = (req: Request, res: Response): void => {
     res.status(201).json({
         message: "Game created successfully",
         game: {
-            gameId: newGame.getGameStatus().gameId
+            gameId: newGame.getGameInfo().gameId
         },
     });
 };
@@ -32,10 +32,11 @@ export const addPlayer = (req: Request, res: Response): void => {
         res.status(404).json({ error: "Game not found" });
         return;
     }
-    const userName = UserService.getUserName(sessionId);
-    const playerName = userName ?? `Player${game.getGameStatus().players.length+1}`;
-    const newPlayer = PlayerService.createPlayer(gameId, playerName);
-    PlayerService.sessionPlayer[sessionId] = newPlayer.getInfo().playerId;
+    if (!sessionId) {
+        res.status(404).json({ error: "sessionId not found" });
+        return;
+    }
+    const newPlayer = PlayerService.createPlayer(game, sessionId);
     
     try {
         game.addPlayer(newPlayer);

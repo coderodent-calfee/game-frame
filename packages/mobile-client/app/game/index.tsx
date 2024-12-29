@@ -5,15 +5,15 @@ import FrameButton from "@/app/components/FrameButton";
 import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
 import {Link} from "expo-router";
+import Logo from "@/app/components/Logo";
 
 export default function Index() {
     return (
 
         <PageLayout
             cornerSize={200}
-            topLeftCorner={<View style={styles.icon}>
-                <Text style={styles.text}>icon</Text>
-            </View>}
+            topLeftCorner={<Logo id="top-left-corner-icon"/>}
+
             // topContent={
             //     <View style={styles.rowFlow}>
             //         <Link href={"/game/index"} asChild>

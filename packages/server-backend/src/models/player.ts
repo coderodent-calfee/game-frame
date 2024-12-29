@@ -3,6 +3,8 @@ export interface Player {
     playerId: string;
     name: string;
     gameId: string;
+
+    getInfo(): U;
 }
 
 export class PlayerEntity implements Player {
