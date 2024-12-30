@@ -44,6 +44,7 @@ export const addPlayer = (req: Request, res: Response): void => {
         res.status(200).json({
             message: `${playerInfo.name} added to the game`,
             game,
+            player: newPlayer
         });
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });

@@ -6,13 +6,14 @@ import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
 import {Link} from "expo-router";
 import Logo from "@/app/components/Logo";
-
+// Looking for a Game by putting in a GameId
 export default function Index() {
     return (
 
         <PageLayout
             cornerSize={200}
             topLeftCorner={<Logo id="top-left-corner-icon"/>}
+            
 
             // topContent={
             //     <View style={styles.rowFlow}>

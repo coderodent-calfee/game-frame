@@ -1,4 +1,4 @@
-﻿import React, {useEffect} from 'react';
+﻿import React, {useEffect, useState} from 'react';
 import {Dimensions, Image, StyleSheet, Text, TextInput, View} from "react-native";
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
 
@@ -9,8 +9,18 @@ import {Link} from "expo-router";
 import {useAppContext} from "@/utils/AppContext";
 import Logo from "@/app/components/Logo";
 
+interface PlayerInfo {
+    [playerId: string]: any;
+}
+
+interface GamePlayerMap {
+    [gameId: string]: PlayerInfo;
+}
+
 export default function Game() {
-    const {sessionId, userInfo, setUserInfo} = useAppContext();
+    const {sessionId, userInfo, getStoredJSON} = useAppContext();
+    const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
+
     const router = useRouter();
     console.log(`pathname: ${usePathname()}`);
     console.log(`segments: ${useSegments()}`);
@@ -18,10 +28,29 @@ export default function Game() {
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
     console.log(`sessionId: ${sessionId}`);
     console.log(`userInfo: `, userInfo);
-    console.log(`gameId: ${gameId}`);
+    console.log(`in gameId: ${gameId}`);
+    console.log(`gamePlayer: `, gamePlayer);
+
+    const isEmpty = (obj: object): boolean => {
+        return Object.keys(obj).length === 0;
+    };
+
+    // we came to the game, but we still must be sure we belong here
+    getStoredJSON('gamePlayer').then((storedGamePlayerInfo)=>{
+        if(storedGamePlayerInfo){
+            if(isEmpty(storedGamePlayerInfo)){return;}
+            setGamePlayer(storedGamePlayerInfo);
+        }
+    });
+ 
+    // getting here we should have saved the playerID in the localstore (but could put in a query)
+    if( gamePlayer === undefined){
+        // still loading 
+    }
+    
+    // in point of fact; we should just ask the server what our playerId is
     
     return (
-
         <PageLayout
             cornerSize={200}
             topLeftCorner={<Logo id="top-left-corner-icon"/> }
@@ -33,7 +62,18 @@ export default function Game() {
                 </View>
             }
             topRightCorner={<Text style={styles.text}>Right Corner</Text>}
-            centralContent={<GameId gameId={gameId} />}
+            leftSideContent={
+                <View style={styles.columnFlow}>
+                    <FrameButton title={userInfo.name} onPress={()=>{}}></FrameButton>
+                </View>
+            }
+            centralContent={
+                <View style={styles.columnFlow}>
+                    <GameId gameId={gameId} />
+                    <Text style={styles.text}>Every User Must Have A Name</Text>
+                    
+                </View>
+            }
             bottomContent={<Text style={styles.text}>Bottom</Text>}
         />
 

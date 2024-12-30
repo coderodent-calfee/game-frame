@@ -3,7 +3,7 @@ import {StyleSheet, Text, View} from "react-native";
 
 import FrameButton from "@/app/components/FrameButton";
 import PageLayout from "@/app/components/PageLayout";
-import {useAppContext} from "@/utils/AppContext";
+import {Player, useAppContext} from "@/utils/AppContext";
 import UserNameComponent from "@/app/components/UserNameComponent";
 import {socket, startSocket, handleSessionUser} from '@/utils/socket';
 import {makePostRequest} from '@/utils/requester'
@@ -20,7 +20,7 @@ interface UserType {
 }
 
 export default function Index() {
-    const {sessionId, userInfo, setUserInfo} = useAppContext();
+    const {sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame } = useAppContext();
     const [editUser, setEditUser] = useState<boolean>(true);
     //const navigation = useNavigation();
     const router = useRouter();
@@ -60,6 +60,13 @@ export default function Index() {
         console.warn("handleUserName ", info);
         setUserInfo((prevState) => ({ ...prevState, ...info }));
     };
+
+    const addGamePlayer = async (gameId : string, playerInfo : Player): Promise<void> => {
+        const storedGamePlayerInfo = await getStoredJSON('gamePlayer');
+        const gamePlayerInfo = addPlayerToGame(gameId, playerInfo, storedGamePlayerInfo || {});
+        console.log("gamePlayerInfo: ", gamePlayerInfo);
+        return setStoredJSON('gamePlayer', gamePlayerInfo).then(()=>gamePlayerInfo) ;
+    };
     
     const newGame = () => {
         console.log(`newGame`);
@@ -76,9 +83,10 @@ export default function Index() {
             .then((response) => {
                 console.log("joinGame response:", response);
                 const gameId = response['game'].gameId;
-                console.log("userInfo: ", userInfo);
-                
-                router.navigate(`game/${gameId}/`, {key:"Howdy"});
+                const playerInfo = response['player'];
+                addGamePlayer(gameId, playerInfo).then(()=>{
+                    router.navigate(`game/${gameId}/`, {key:"JoinGame"}); // key still needed?
+                });
             }).catch((error) => {
                 console.log("newGame failed:", error)
         });
@@ -107,7 +115,6 @@ export default function Index() {
             leftSideContent={
                 userInfo.name &&
                 <View style={styles.columnFlow}>
-                    <Text style={styles.text}>User:</Text>
                     <FrameButton title={userInfo.name} onPress={toggleEditUser}></FrameButton>
                 </View>
             }

@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
 
 const startSocketServer = () => {
     httpServer.listen(SOCKET_PORT, () => {
-        console.log(`Server is running on http://${SERVER_URL}:${SOCKET_PORT}`);
+        console.log(`Socket Server is running on http://${SERVER_URL}:${SOCKET_PORT}`);
     });
 };
 

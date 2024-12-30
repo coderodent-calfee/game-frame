@@ -7,6 +7,7 @@ import {startSocketServer} from "./services/socketService";
 dotenv.config({ path: '../../.env' });
 
 const PORT = process.env.SERVER_PORT || 3035;
+const URL = process.env.SERVER_URL || 'localhost';
 
 const app = express();
 
@@ -34,7 +35,7 @@ app.use(express.json());
 app.use('/api', routes);
 
 app.listen(PORT, () => {
-    console.log(`Application Server running on http://localhost:${PORT}`);
+    console.log(`Application Server running on http://${URL}:${PORT}`);
 });
 
 app.use((req, res) => {
