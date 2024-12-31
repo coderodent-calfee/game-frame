@@ -16,12 +16,4 @@ export class PlayerEntity implements Player {
         this.playerId = playerId;
     }
 
-    getInfo() : Player {
-        return {
-            gameId: this.gameId,
-            name: this.name,
-            playerId: this.playerId
-        };
-    }
-
 }

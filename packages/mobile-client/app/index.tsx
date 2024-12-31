@@ -37,7 +37,7 @@ export default function Index() {
     }, [sessionId]);
 
     useEffect(() => {
-        console.log(`useEffect editUser:${editUser} userInfo.name:${userInfo.name}`)
+        console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
         if (userInfo.name) {
             setEditUser(false);
         }
@@ -56,7 +56,16 @@ export default function Index() {
         setEditUser(true);
     };
     
+    const generateId = (): string => {
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+    
     const handleUserName = (info)=>{
+        if(userInfo && !userInfo.userId){
+            info.userId = generateId(); 
+        }
         console.warn("handleUserName ", info);
         setUserInfo((prevState) => ({ ...prevState, ...info }));
     };

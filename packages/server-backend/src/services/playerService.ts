@@ -18,14 +18,15 @@ function generateId(): string {
 
 export const createPlayer = (game : GameEntity, sessionId: string): PlayerEntity => {
 
-    const userName = UserService.getUserName(sessionId);
-    const playerName = userName ?? `Player${game.getGameInfo().players.length+1}`;
+    const userInfo = UserService.getUserInfo(sessionId);
+    const playerName = userInfo?.name ?? `Player${game.players.length+1}`;
+    console.log("playerName is:", playerName );
 
     const playerId = generateId();
     const newPlayer = new PlayerEntity(game.gameId, playerName, playerId);
 
     players[playerId] = newPlayer;
-    sessionPlayer[sessionId] = newPlayer.getInfo().playerId;
+    sessionPlayer[sessionId] = newPlayer.playerId;
 
     return newPlayer;
 };
@@ -37,4 +38,4 @@ export const getPlayerBySession = (sessionId: string): PlayerEntity | undefined 
     }
 };
 
-export default {sessionPlayer, createPlayer};
+export default {sessionPlayer, createPlayer, getPlayerBySession};

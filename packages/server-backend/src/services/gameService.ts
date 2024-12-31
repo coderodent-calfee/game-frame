@@ -1,5 +1,8 @@
 ﻿// src/services/GameService.ts
 import { GameEntity } from "../models/game";
+import {PlayerEntity} from "@server-backend/models/player";
+import PlayerService from "@server-backend/services/playerService";
+import UserService, {getUserInfo} from "@server-backend/services/userService";
 
 const games: Record<string, GameEntity> = {};
 // sessionId -> GameId
@@ -33,4 +36,19 @@ export const getGameBySession = (sessionId: string): GameEntity | undefined => {
     }
 };
 
-export default {createGame, getGameById, getGameBySession};
+export const getGamePlayer = (sessionId: string, gameId: string) : PlayerEntity | undefined => {
+    // the session should be good enough, but the player only goes with one game, so 
+    // todo: check the gameId too
+    const player = PlayerService.getPlayerBySession(sessionId);
+    if(player){
+        return player;
+    }
+    else {
+        console.log(`no player found for sessionId: ${sessionId}`);
+        const userInfo = UserService.getUserInfo(sessionId);
+        console.log(`user for sessionId: ${sessionId}`, userInfo);
+    }
+    return undefined;
+};
+
+export default {createGame, getGameById, getGameBySession, getGamePlayer};

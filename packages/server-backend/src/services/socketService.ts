@@ -25,15 +25,15 @@ const socketSession : SocketSessionMap = {};
 
 // Backend socket communication
 io.on('connection', (socket) => {
-    socket.on('sessionUser', (data: {sessionId:string, userName?:string}) => {
+    socket.on('sessionUser', (data: {sessionId:string, userInfo?:any}) => {
         console.log(`Client connected: ${socket.id}`);
         console.log(`sessionId ${data.sessionId}`);
-        console.log(`userName ${data.userName}`);
-        if(data.userName){
-            UserService.setUserName(data.sessionId, data.userName);
+        console.log(`userInfo : `, data.userInfo );
+        if(data.userInfo){
+            UserService.setUserInfo(data.sessionId, data.userInfo);
         }
         socketSession[`${socket.id}`] = data.sessionId;
-        console.log(`socketSession `, data.sessionId, data.userName );
+        console.log(`socketSession `, data.sessionId, data.userInfo );
     });
     
     socket.on('clientMessage', (data) => {
@@ -54,5 +54,15 @@ const startSocketServer = () => {
         console.log(`Socket Server is running on http://${SERVER_URL}:${SOCKET_PORT}`);
     });
 };
+const sessionSocket = (sessionId: string): string | null => {
+    for (const socketId of Object.keys(socketSession)) {
+        if (socketSession[socketId] === sessionId) {
+            return socketId;
+        }
+    }
+    return null; // Return null if no match is found
+};
 
-export { startSocketServer, socketSession };
+
+
+export { startSocketServer, socketSession, sessionSocket };

@@ -78,8 +78,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         return gamePlayerMap;
     }
 
-
-
     useEffect(() => {
         const loadData = async () => {
             const storedUserInfo = await getStoredJSON('userInfo');

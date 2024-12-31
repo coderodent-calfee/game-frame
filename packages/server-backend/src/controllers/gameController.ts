@@ -1,7 +1,6 @@
 ﻿// controllers/GameController.ts
-import { Request, Response } from "express";
+import {Request, Response} from "express";
 import GameService from "../services/gameService";
-import UserService from "../services/userService";
 import PlayerService from "../services/playerService";
 
 
@@ -19,7 +18,7 @@ export const createGame = (req: Request, res: Response): void => {
     res.status(201).json({
         message: "Game created successfully",
         game: {
-            gameId: newGame.getGameInfo().gameId
+            gameId: newGame.gameId
         },
     });
 };
@@ -40,9 +39,8 @@ export const addPlayer = (req: Request, res: Response): void => {
     
     try {
         game.addPlayer(newPlayer);
-        const playerInfo = newPlayer.getInfo();
         res.status(200).json({
-            message: `${playerInfo.name} added to the game`,
+            message: `${newPlayer.name} added to the game`,
             game,
             player: newPlayer
         });
@@ -64,21 +62,36 @@ export const startGame = (req: Request, res: Response): void => {
         game.startGame();
         res.status(200).json({
             message: "Game started successfully",
-            gameStatus: game.getGameStatus()
+            gameStatus: game.status
         });
     } catch (error) {
         res.status(400).json({ error: (error as Error).message });
     }
 };
 
-export const getGameStatus = (req: Request, res: Response): void => {
+export const getGameInfo = (req: Request, res: Response): void => {
     const { gameId } = req.params;
-
+    const  sessionId  = req.query.sessionId.toString();
+    console.log(`req.query is a  ${typeof  req.query} req.query: `, req.query);
+    console.log(`sessionId is a  ${typeof  sessionId} sessionId: `, sessionId);
+    console.log(`getGameInfo: gameId ${gameId} sessionId: ${sessionId}`);
     const game = GameService.getGameById(gameId);
     if (!game) {
+        console.log(`gameId ${gameId} not found:`, gameId);
+
         res.status(404).json({ error: "Game not found" });
         return;
     }
-
-    res.status(200).json(game.getGameStatus());
+    const gameInfo = {game};
+    console.log(`gameId ${gameId} found:`, gameInfo);
+    if(sessionId){
+        const player = GameService.getGamePlayer(sessionId, gameId);
+        if(player){
+            gameInfo["player"] = player;
+        }
+    }
+    else{
+        console.log(`no sessionId: ${sessionId}`)
+    }
+    res.status(200).json(gameInfo);
 };

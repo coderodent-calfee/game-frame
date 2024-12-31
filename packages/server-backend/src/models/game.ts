@@ -41,15 +41,4 @@ export class GameEntity implements Game {
     getPlayerIds() {
         return this.players.map((player:Player) => player.playerId);
     }
-    
-    getGameInfo() {
-        return {
-            gameId: this.gameId,
-            status: this.status,
-            players: this.players.map((player)=>player.getInfo()),
-            minPlayers : this.minPlayers,
-            maxPlayers : this.maxPlayers
-        };
-    }
-
 }

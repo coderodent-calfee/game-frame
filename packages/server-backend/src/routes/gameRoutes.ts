@@ -1,11 +1,9 @@
 ﻿import { Router } from 'express';
-import {addPlayer, createGame} from "../controllers/gameController";
+import {addPlayer, createGame, getGameInfo} from "../controllers/gameController";
 
 const router = Router();
 
-router.get('/info', (req, res) => {
-    res.json({ message: 'Game info route' });
-});
+router.get('/:gameId/info', getGameInfo);
 
 router.post('/:gameId/join', addPlayer);
 

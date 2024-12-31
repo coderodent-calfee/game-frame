@@ -1,15 +1,20 @@
-﻿
-// sessionId -> GameId
+﻿import {Player} from "@server-backend/models/player";
+
+
+export interface UserInfo {
+    userId: string;
+    name: string;
+}
 interface SessionUserMap {
-    [sessionId: string]: string;
+    [sessionId: string]: UserInfo;
 }
 const sessionUser : SessionUserMap = {};
 
-export const getUserName = (sessionId: string): string | undefined => {
+export const getUserInfo = (sessionId: string): UserInfo | undefined => {
     return sessionUser[sessionId];
 };
-export const setUserName = (sessionId: string, userName: string) => {
-    sessionUser[sessionId] = userName;
+export const setUserInfo = (sessionId: string, userInfo: UserInfo) => {
+    sessionUser[sessionId] = userInfo;
 };
 
-export default {getUserName, setUserName};
+export default {getUserInfo: getUserInfo, setUserInfo};

@@ -30,14 +30,9 @@ export const handleSessionUser = (sessionId, userInfo) =>  {
     // When the client connects to the server
     console.log(`sessionId: ${sessionId}`);
     if(!sessionId){ return; }
+    console.log(`handleSessionUser userInfo:`, userInfo);
 
-    const sessionUserData : {sessionId:string, userName?:string} = {};
-    sessionUserData.sessionId = sessionId;
-
-    // todo: send all the user information
-    if(userInfo.name && userInfo.name.length){
-        sessionUserData.userName = userInfo.name;
-    }
+    const sessionUserData = {sessionId, userInfo};
     socket.emit('sessionUser', sessionUserData);
 };
 
