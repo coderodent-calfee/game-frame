@@ -17,4 +17,10 @@ export const setUserInfo = (sessionId: string, userInfo: UserInfo) => {
     sessionUser[sessionId] = userInfo;
 };
 
-export default {getUserInfo: getUserInfo, setUserInfo};
+export const disconnectUser = (sessionId: string) => {
+    delete sessionUser[sessionId];
+};
+
+
+
+export default {getUserInfo, setUserInfo, disconnectUser};

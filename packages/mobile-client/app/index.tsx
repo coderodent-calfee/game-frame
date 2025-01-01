@@ -28,20 +28,13 @@ export default function Index() {
     const toggleEditUser = () => {
         setEditUser((prevState) => !prevState);
     };
-
-    // Client socket communication
-    useEffect(startSocket, []);
     
-    useEffect(() => {
-        handleSessionUser(sessionId, userInfo);
-    }, [sessionId]);
 
     useEffect(() => {
         console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
         if (userInfo.name) {
             setEditUser(false);
         }
-        handleSessionUser(sessionId, userInfo);
     }, [userInfo]);
 
     const sendMessage = () => {

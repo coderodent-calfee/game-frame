@@ -3,6 +3,7 @@ import {Server} from "socket.io";
 import UserService from "../services/userService";
 import app from "@server-backend/app";
 import dotenv from 'dotenv';
+import PlayerService from "@server-backend/services/playerService";
 
 dotenv.config({ path: '../../.env' });
 const SOCKET_PORT = process.env.SOCKET_PORT || 3000;
@@ -44,8 +45,12 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
+
+        PlayerService.disconnectPlayer(socketSession[socket.id]);
+        UserService.disconnectUser(socketSession[socket.id]);
+
         delete socketSession[socket.id];
-        console.log(`socketSession `, socketSession );
+        console.log(`remaining socketSessions `, socketSession );
     });
 });
 

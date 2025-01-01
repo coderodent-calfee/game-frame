@@ -1,6 +1,7 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // For React Native
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {handleSessionUser, startSocket} from "@/utils/socket"; // For React Native
 
 // Define the shape of the context state
 interface AppContextType {
@@ -94,12 +95,20 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const saveData = async () => {
             await setStoredJSON('userInfo', userInfo);
         };
-
         if (userInfo) {
             saveData(); // Save data if userInfo changes
         }
     }, [userInfo]);
+    
+    // Client socket communication
+    useEffect(startSocket, []);
 
+    useEffect(() => {
+        handleSessionUser(sessionId, userInfo);
+    }, [sessionId, userInfo]);
+
+
+    
     return (
         <AppContext.Provider
             value={{

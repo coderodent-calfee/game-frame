@@ -38,4 +38,17 @@ export const getPlayerBySession = (sessionId: string): PlayerEntity | undefined 
     }
 };
 
-export default {sessionPlayer, createPlayer, getPlayerBySession};
+export const getSessionByPlayer = (playerId: string): string | undefined => {
+    for (const [sessionId, mappedPlayerId] of Object.entries(sessionPlayer)) {
+        if (mappedPlayerId === playerId) {
+            return sessionId;
+        }
+    }
+    return undefined;
+};
+
+
+export const disconnectPlayer = (sessionId: string) => {
+    delete sessionPlayer[sessionId];
+};
+export default {sessionPlayer, createPlayer, getPlayerBySession, getSessionByPlayer, disconnectPlayer};

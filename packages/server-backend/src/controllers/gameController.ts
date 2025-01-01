@@ -87,6 +87,8 @@ export const getGameInfo = (req: Request, res: Response): void => {
     if(sessionId){
         const player = GameService.getGamePlayer(sessionId, gameId);
         if(player){
+            console.log(`return playerId ${ player.playerId} sessionId is ${sessionId}: `);
+            
             gameInfo["player"] = player;
         }
     }

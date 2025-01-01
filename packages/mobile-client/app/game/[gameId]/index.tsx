@@ -53,7 +53,7 @@ export default function Game() {
     const isEmpty = (obj: object): boolean => {
         return Object.keys(obj).length === 0;
     };
-    useEffect(()=>{
+    useEffect(()=> {
         // getting here we should have saved the playerID in the localstore (but could put in a query)
         if( gamePlayer === undefined){
             // we came to the game, but we still must be sure we belong here
@@ -65,33 +65,55 @@ export default function Game() {
             });
             // still loading 
         }
-
-        // gamePlayerMap[gameId][playerId] = playerData;
-
+    }, []);
+    
+    useEffect(()=>{
         const gameSearchParams = {gameId};
         if(sessionId) {
             gameSearchParams["sessionId"] = sessionId;
         }
+        if((gamePlayer && gamePlayer[gameId])) {
+            console.log("RWC gamePlayer[gameId]:", gamePlayer[gameId]);
+        }
         // in point of fact; we should just ask the server what our playerId is
-        if(!player){
-            makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams(gameSearchParams))
-                .then((response) => {
-                    console.log("GameInfo response:", response);
-                    if(response.player){
-                        console.log("player:", response.player);
-
+    
+        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams(gameSearchParams))
+            .then((response) => {
+                const game = response.game;
+                if(!game){
+                    // why is it not error status?
+                    // todo: navigate away from here: no game exists
+                }
+                console.log("RWC GameInfo response:", response);
+                if(response.player){
+                    console.log("RWC player:", player);
+                    if(player?.playerId !== response.player.playerId){
                         setPlayer(response.player);
                     }
-                    else {
-                        setPlayerNotFound();
-                    };
-                }).catch((error) => {
-                console.log("GameInfo failed:", error)
-                setPlayerNotFound();
-            });
-        }
+                }
+                else {
+                    //todo: this may no longer be needed
+                    console.log("no player:", game);
 
-    }, []);
+                    if((gamePlayer && gamePlayer[gameId])) {
+                        console.log("RWC no player and gamePlayer[gameId]:", gamePlayer[gameId]);
+                        const gamePlayers = Object.keys(gamePlayer[gameId]);
+                        game.players.forEach((p)=>{
+                            if( gamePlayers.includes( p.playerId )){
+                                if(player?.playerId !== p.playerId) {
+
+                                    setPlayer(p);
+                                }
+                            }
+                        });
+                    }
+                }
+            }).catch((error) => {
+                console.log("GameInfo failed:", error);
+                setPlayerNotFound();
+            }
+        );
+    }, [player, gamePlayer]);
 
     console.log(`Player: `, player);
     let playerName : string = "Looking";
@@ -126,7 +148,11 @@ export default function Game() {
 
                 </View>
             }
-            bottomContent={<Text style={[styles.text, {fontSize: 30}]}>{sessionId}</Text>}
+            bottomContent={
+                <View style={styles.columnFlow}>
+                    <Text style={[styles.text, {fontSize: 30}]}>session:{sessionId}</Text>
+                    {player && <Text style={[styles.text, {fontSize: 30}]}>player:{player.playerId}</Text>}
+                </View>}
         />
 
     );
