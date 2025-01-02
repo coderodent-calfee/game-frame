@@ -40,6 +40,7 @@ interface GameInfoType {
 export default function Game() {
     const {sessionId, userInfo, getStoredJSON} = useAppContext();
     const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
+    const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
     const router = useRouter();
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
@@ -79,11 +80,11 @@ export default function Game() {
     
         makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams(gameSearchParams))
             .then((response) => {
-                const game = response.game;
-                if(!game){
+                if(!response.game){
                     // why is it not error status?
                     // todo: navigate away from here: no game exists
                 }
+                setGame(response.game);
                 console.log("RWC GameInfo response:", response);
                 if(response.player){
                     console.log("RWC player:", player);
@@ -98,7 +99,7 @@ export default function Game() {
                     if((gamePlayer && gamePlayer[gameId])) {
                         console.log("RWC no player and gamePlayer[gameId]:", gamePlayer[gameId]);
                         const gamePlayers = Object.keys(gamePlayer[gameId]);
-                        game.players.forEach((p)=>{
+                        response.game.players.forEach((p)=>{
                             if( gamePlayers.includes( p.playerId )){
                                 if(player?.playerId !== p.playerId) {
 
@@ -139,6 +140,9 @@ export default function Game() {
             leftSideContent={
                 <View style={styles.columnFlow}>
                     <FrameButton title={playerName} onPress={()=>{}}></FrameButton>
+                    {game && game.players.map((item, index) => (
+                        <FrameButton title={item.name} onPress={()=>{}}></FrameButton>
+                    ))}
                 </View>
             }
             centralContent={

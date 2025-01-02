@@ -16,6 +16,16 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
 
     console.log(`render input ${input}`);
 
+
+    useEffect(() => {
+
+        const possibleGameId = display.join("");
+
+        console.log(`useEffect possibleGameId ${possibleGameId} len ${possibleGameId.length}`);
+
+        
+    }, [display]);
+
     // Update input when gameId is provided
     useEffect(() => {
         if (gameId && gameId.length === 6) {
@@ -76,28 +86,6 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
         const newValue = `${key}`;
         handleInput(newValue, index);
 
-        // // Detect if the key pressed is a valid character
-        // if (key.length === 1 && /[A-Z0-9]/.test(key.toUpperCase())) {
-        //     const updatedInput = [...input];
-        //     updatedInput[index] = key.toUpperCase(); // Enforce uppercase
-        //     setInput(updatedInput);
-        //
-        //     // Move to the next input if this one is filled
-        //     if (index < 5) {
-        //         const nextInput = document.getElementById(`input-${index + 1}`);
-        //         if (nextInput) {
-        //             nextInput.focus();
-        //         }
-        //     }
-        // } else if (key === 'Backspace' || key === 'ArrowLeft') {
-        //     // If backspace or left arrow, focus on the previous input
-        //     if (index > 0) {
-        //         const prevInput = document.getElementById(`input-${index - 1}`);
-        //         if (prevInput) {
-        //             prevInput.focus();
-        //         }
-        //     }
-        // }
     };
     return (
         <View style={styles.container}>
