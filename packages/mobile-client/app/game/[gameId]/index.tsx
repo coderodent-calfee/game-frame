@@ -38,7 +38,9 @@ interface GameInfoType {
 }
 
 export default function Game() {
-    const {sessionId, userInfo, getStoredJSON} = useAppContext();
+    const {screenSize, appStyles, sessionId, userInfo, getStoredJSON} = useAppContext();
+    
+
     const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
@@ -127,18 +129,19 @@ export default function Game() {
 
     return (
         <PageLayout
-            cornerSize={150}
+            cornerSize={screenSize.corner}
             topLeftCorner={<Logo id="top-left-corner-icon"/> }
             topContent={
-                <View style={styles.rowFlow}>
+                <View style={appStyles.rowFlow}>
                     <Link href="/game/" asChild>
                         <FrameButton title="Look For Game" onPress={()=>{}}></FrameButton>
                     </Link>
                 </View>
             }
-            topRightCorner={<Text style={styles.text}>Right Corner</Text>}
+            topRightCorner={<Text style={appStyles.largeText}>Right Corner</Text>}
+
             leftSideContent={
-                <View style={styles.columnFlow}>
+                <View style={appStyles.columnFlow}>
                     <FrameButton title={playerName} onPress={()=>{}}></FrameButton>
                     {game && game.players.map((item, index) => (
                         <FrameButton title={item.name} onPress={()=>{}}></FrameButton>
@@ -146,16 +149,18 @@ export default function Game() {
                 </View>
             }
             centralContent={
-                <View style={styles.columnFlow}>
+                <View style={appStyles.columnFlow}>
                     <GameId gameId={gameId} />
-                    <Text style={styles.text}>{playerName}</Text>
+                    <Text style={appStyles.mediumText}>{playerName}</Text>
 
                 </View>
             }
             bottomContent={
-                <View style={styles.columnFlow}>
-                    <Text style={[styles.text, {fontSize: 30}]}>session:{sessionId}</Text>
-                    {player && <Text style={[styles.text, {fontSize: 30}]}>player:{player.playerId}</Text>}
+                <View style={appStyles.columnFlow}>
+                    <Text style={[appStyles.largeText]}>width: {screenSize.width} height: {screenSize.height}</Text>
+
+                    <Text style={[appStyles.smallText]}>session:{sessionId}</Text>
+                    {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}
                 </View>}
         />
 

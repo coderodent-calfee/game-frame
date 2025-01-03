@@ -1,5 +1,5 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Platform } from 'react-native';
+import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {handleSessionUser, startSocket} from "@/utils/socket"; // For React Native
 
@@ -14,7 +14,16 @@ interface AppContextType {
     getStoredJSON: (key: string) => Promise<object | null>;
     setStoredJSON: (key: string, value: object) => Promise<void>;
     removeStoredItem: (key: string) => Promise<void>;
+    screenSize: { width: number, height: number, corner:number };
+    appStyles: {
+        mediumText: { color: string, fontSize: number },
+        rowFlow: { flex: number, flexDirection: "row" },
+        largeText: { color: string, fontSize: number },
+        smallText: { color: string, fontSize: number },
+        columnFlow: { flex: number, flexDirection: "column" }
+    };
 }
+
 
 export interface Player {
     playerId: string;
@@ -29,8 +38,43 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [sessionId, setSessionId] = useState<string>(generateSessionId());
     const [userInfo, setUserInfo] = useState<any>({});
+    const figureScreenSize = ()=>{
+        const dim = Dimensions.get('window');
+        const maxDim = Math.max(dim.height, dim.width);
+        const corner = maxDim > 1500 ? 200 : maxDim < 500 ? 75: 100;
+        return({...dim, corner});
+    };
+    const [screenSize, setScreenSize] = useState(figureScreenSize());
+    const [appStyles, setAppStyles] = useState({...styles});
 
+
+    useEffect(() => {
+        const handleResize = () => {
+            setScreenSize(figureScreenSize);
+        };
+        
+        Dimensions.addEventListener('change', handleResize);
+
+        return () => {
+            Dimensions.removeEventListener('change', handleResize);
+        };
+    }, []);
     const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
+
+    useEffect(() => {
+        // screens: tv/computer width: 1536 height: 826
+        // mobile portrait: width: 412 height: 733
+        const screenWidth = screenSize.width;
+        const fontStyleLarge = screenWidth > 1500 ? styles.largeText : screenWidth < 500 ? styles.smallText : styles.mediumText;
+        const fontStyleMedium = screenWidth > 1500 ? styles.mediumText : screenWidth < 500 ? styles.smallestText : styles.smallText;
+        const fontStyleSmall = screenWidth > 1500 ? styles.smallText : styles.smallestText;
+        setAppStyles({...styles,
+            largeText: fontStyleLarge,
+            mediumText: fontStyleMedium,
+            smallText: fontStyleSmall,
+        });
+    }, [screenSize]);
+
 
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
@@ -107,7 +151,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         handleSessionUser(sessionId, userInfo);
     }, [sessionId, userInfo]);
 
-
     
     return (
         <AppContext.Provider
@@ -121,7 +164,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 getStoredString,
                 setStoredString,
                 removeStoredItem,
-                addPlayerToGame
+                addPlayerToGame,
+                screenSize,
+                appStyles
             }}
         >
             {children}
@@ -161,3 +206,31 @@ export const useAppContext = () => {
     }
     return context;
 };
+
+
+const styles = StyleSheet.create({
+    smallestText: {
+        color: 'white',
+        fontSize: 10,
+    },
+    smallText: {
+        color: 'white',
+        fontSize: 15,
+    },
+    mediumText: {
+        color: 'white',
+        fontSize: 20,
+    },
+    largeText: {
+        color: 'white',
+        fontSize: 30,
+    },
+    rowFlow: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    columnFlow: {
+        flex: 1,
+        flexDirection: 'column',
+    },
+});

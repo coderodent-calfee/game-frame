@@ -1,6 +1,7 @@
 ﻿import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import clientLog from '../../utils/clientLog';
+import {useAppContext} from "@/utils/AppContext";
 
 // Rainbow colors for each character
 const colors = ['#FF0000', '#FF7F00', '#CCCC00', '#00CC00', '#0000FF', '#4B0082'];
@@ -14,6 +15,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
     const [display, setDisplay] = useState<string[]>(new Array(6).fill(''));
     const [input, setInput] = useState<string[]>(new Array(6).fill(''));
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+    const { screenSize, appStyles } = useAppContext();
 
     console.log(`render input ${input}`);
 
@@ -92,6 +94,8 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
         handleInput(newValue, index);
 
     };
+    const gameIdStyles= screenSize.width < 500 ? smallStyles : styles ;
+    
     return (
         <View style={styles.container}>
             {display.map((char, index) => (
@@ -99,14 +103,14 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
                     // If gameId is provided, show the rainbow-colored character
                     <View
                         key={index}
-                        style={[styles.fixedBox, { backgroundColor: colors[index] }]}>
-                        <Text style={styles.fixedText}>{char || '-'}</Text>
+                        style={[gameIdStyles.fixedBox, { backgroundColor: colors[index] }]}>
+                        <Text style={gameIdStyles.fixedText}>{char || '-'}</Text>
                     </View>
                 ) : (
                     <TextInput
                         key={index}
                         id={`input-${index}`}
-                        style={[styles.input, { borderColor: colors[index] }]}
+                        style={[gameIdStyles.input, { borderColor: colors[index] }]}
                         onChange={(e) => handleChange(e, index)}
                         onKeyPress={(e) => handleKeyPress(e, index)}
                         keyboardType="default"
@@ -153,4 +157,34 @@ const styles = StyleSheet.create({
     },
 });
 
+const smallStyles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    input: {
+        width: 40,
+        height: 40,
+        fontSize: 30,
+        borderWidth: 2,
+        margin: 5,
+        borderRadius: 10,
+        textAlign: 'center',
+        color: 'white',
+    },
+    fixedBox: {
+        width: 40,
+        height: 40,
+        margin: 5,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fixedText: {
+        fontSize: 20,
+        color: 'white',
+    },
+});
 export default GameId;

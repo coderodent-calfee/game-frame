@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import {useAppContext} from "@/utils/AppContext";
 
 interface FrameButtonProps {
     title: string;
@@ -7,9 +8,11 @@ interface FrameButtonProps {
 }
 
 const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress}, ref) => {
+    const {appStyles } = useAppContext();
+
     return (
         <TouchableOpacity ref={ref} style={styles.button} onPress={onPress} >
-            <Text style={styles.buttonText} numberOfLines={1}>{title}</Text>
+            <Text style={[styles.buttonText, appStyles.largeText ]} numberOfLines={1}>{title}</Text>
         </TouchableOpacity>
     );
 };
@@ -26,9 +29,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         marginRight: 2,
-        marginLeft: 2,
-        fontSize: 30,
-        color: 'white',
+        marginLeft: 2, 
         flexShrink: 1,
     },
 });

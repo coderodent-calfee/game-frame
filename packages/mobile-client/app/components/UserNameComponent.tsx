@@ -1,8 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { TextInput, Text, View, StyleSheet } from 'react-native';
+import {useAppContext} from "@/utils/AppContext";
 
 const UserNameComponent = ({ user, setUserName }: { user: { name: string | null }, setUserName: (info: { name: string }) => void }) => {
-    
+    const {appStyles } = useAppContext();
+
     const [nameInput, setNameInput] = useState<string>(user.name || '');
     useEffect(() => {
         setNameInput(user.name || ''); // Sync the input with user.name if available
@@ -21,7 +23,7 @@ const UserNameComponent = ({ user, setUserName }: { user: { name: string | null 
         <View style={styles.container}>
             {
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, appStyles.largeText]}
                     value={nameInput}
                     onChangeText={handleNameChange}
                     onSubmitEditing={handleNameSubmit}
@@ -37,10 +39,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         paddingHorizontal: 10,
     },
-    text: {
-        color: 'white',
-        fontSize: 30,
-    },
+    
     input: {
         margin: 10,
         borderRadius: 10,
@@ -48,8 +47,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 2,
         borderColor: 'white',
-        color: 'white',
-        fontSize: 30,
     },
 });
 

@@ -8,6 +8,7 @@ import UserNameComponent from "@/app/components/UserNameComponent";
 import {socket, startSocket, handleSessionUser} from '@/utils/socket';
 import {makePostRequest} from '@/utils/requester'
 import {useNavigation} from "@react-navigation/native";
+
 import {Link, useRouter} from "expo-router";
 import Logo from "@/app/components/Logo";
 
@@ -20,7 +21,7 @@ interface UserType {
 }
 
 export default function Index() {
-    const {sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame } = useAppContext();
+    const {appStyles, sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame,screenSize } = useAppContext();
     const [editUser, setEditUser] = useState<boolean>(true);
     //const navigation = useNavigation();
     const router = useRouter();
@@ -93,13 +94,15 @@ export default function Index() {
                 console.log("newGame failed:", error)
         });
     }
+    
+    
     return (
         <PageLayout
-            cornerSize={150}
+            cornerSize={screenSize.corner}
             topLeftCorner={<Logo id="top-left-corner-icon"/>}
             topContent={
                 userInfo.name && userInfo.name.length && 
-                <View style={styles.rowFlow}>
+                <View style={appStyles.rowFlow}>
                     <Link href="/game" asChild>
                         <FrameButton title="Look For Game" onPress={() => {
                         }}></FrameButton>
@@ -107,43 +110,34 @@ export default function Index() {
 
                     <FrameButton title="New Game" onPress={newGame}></FrameButton>
 
-                    <FrameButton title="Send" onPress={sendMessage}></FrameButton>
-                    <FrameButton title="Reset User" onPress={resetUser}></FrameButton>
 
                 </View>
 
             }
-            topRightCorner={<Text style={styles.text}>Right Corner</Text>}
+            topRightCorner={<Text style={appStyles.largeText}>Right Corner</Text>}
             leftSideContent={
                 userInfo.name &&
-                <View style={styles.columnFlow}>
+                <View style={appStyles.columnFlow}>
                     <FrameButton title={userInfo.name} onPress={toggleEditUser}></FrameButton>
                 </View>
             }
             centralContent={
-                <View style={styles.columnFlow}>
+                <View style={appStyles.columnFlow}>
                     {editUser && <UserNameComponent user={userInfo} setUserName={handleUserName}/>}
+                    {editUser && <FrameButton title="Reset User" onPress={resetUser}></FrameButton>}
                     {!userInfo.name &&
-                        <Text style={styles.text}>Every User Must Have A Name</Text>}
+                        <Text style={appStyles.mediumText}>Every User Must Have A Name</Text>}
                 </View>
             }
-            bottomContent={<Text style={[styles.text, {fontSize: 30}]}>{sessionId}</Text>}
+            bottomContent={
+                <View style={appStyles.columnFlow}>
+                    <FrameButton title="Send" onPress={sendMessage}></FrameButton>
+                    <Text style={[appStyles.largeText]}>width: {screenSize.width} height: {screenSize.height}</Text>
+                    <Text style={[appStyles.smallText]}>{sessionId}</Text>
+                </View>
+            }
         />
     );
 }
 
-const styles = StyleSheet.create({
-    text: {
-        color: 'white',
-        fontSize: 30,
-    },
-    rowFlow: {
-        flex: 1,
-        flexDirection: 'row',
-    },
-    columnFlow: {
-        flex: 1,
-        flexDirection: 'column',
-    },
-});
 
