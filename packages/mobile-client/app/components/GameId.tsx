@@ -6,10 +6,11 @@ import clientLog from '../../utils/clientLog';
 const colors = ['#FF0000', '#FF7F00', '#CCCC00', '#00CC00', '#0000FF', '#4B0082'];
 
 interface GameIdProps {
+    setGameId? : (id:string) => void;
     gameId?: string;
 }
 
-const GameId: React.FC<GameIdProps> = ({ gameId }) => {
+const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
     const [display, setDisplay] = useState<string[]>(new Array(6).fill(''));
     const [input, setInput] = useState<string[]>(new Array(6).fill(''));
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -22,7 +23,9 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
         const possibleGameId = display.join("");
 
         console.log(`useEffect possibleGameId ${possibleGameId} len ${possibleGameId.length}`);
-
+        if(setGameId && possibleGameId && possibleGameId.length ){
+            setGameId(possibleGameId);
+        }
         
     }, [display]);
 
@@ -80,6 +83,8 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
     const handleKeyPress = (e: any, index: number) => {
         const key = e.nativeEvent.key;
         console.warn(`handleKeyPress ${e.nativeEvent.key} at ${index}`);
+        const inputElement = document.getElementById(`input-${index}`);
+        inputElement.value = "";
         if(key.len !== 1){
             return;
         }
@@ -107,7 +112,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId }) => {
                         keyboardType="default"
                         textAlign="center"
                         // not sure these work right
-                        maxLength={1}
+                        // maxLength={1}
                         value={char}
                         
                     />

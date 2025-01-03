@@ -127,7 +127,7 @@ export default function Game() {
 
     return (
         <PageLayout
-            cornerSize={200}
+            cornerSize={150}
             topLeftCorner={<Logo id="top-left-corner-icon"/> }
             topContent={
                 <View style={styles.rowFlow}>

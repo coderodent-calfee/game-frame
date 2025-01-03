@@ -4,8 +4,9 @@ import {Dimensions, Image, StyleSheet, Text, TextInput, View} from "react-native
 import FrameButton from "@/app/components/FrameButton";
 import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
-import {Link} from "expo-router";
+import {Link, Redirect} from "expo-router";
 import Logo from "@/app/components/Logo";
+import {makeGetRequest} from "@/utils/requester";
 
 
 // todo: put these in one place
@@ -22,14 +23,44 @@ interface GameType {
     minPlayers: number;
     maxPlayers: number;
 }
+
+interface GameInfoType {
+    game: GameType;
+    player?: Player;
+}
+
 // Looking for a Game by putting in a GameId
 export default function Index() {
     const [game, setGame] = useState<GameType | undefined>();
+    const [gameId, setGameId] = useState<string>();
 
+    useEffect(() => {
+        console.log(`useEffect gameId ${gameId} len ${gameId?.length}`);
+        if (!gameId || gameId.length !== 6) {
+            return;
+        }
+        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams({gameId}))
+            .then((response) => {
+                if(!response.game){
+                    return;
+                }
+                setGame(response.game);
+            }).catch((error) => {
+                console.log("GameInfo failed:", error);
+            }
+        );
+    }, [gameId]);
+    
+    useEffect(() => {
+        console.log(`useEffect game` , game);
+    }, [game]);
+    if(game){
+        return  <Redirect href={`/game/${game.gameId}/`}/>;
+    }
     return (
 
         <PageLayout
-            cornerSize={200}
+            cornerSize={150}
             topLeftCorner={<Logo id="top-left-corner-icon"/>}
             
 
@@ -41,7 +72,7 @@ export default function Index() {
             //     </View>
             // }
             topRightCorner={<Text style={styles.text}>Right Corner</Text>}
-            centralContent={<GameId/>}
+            centralContent={<GameId setGameId={setGameId}/>}
             bottomContent={<Text style={styles.text}>Bottom</Text>}
         />
 

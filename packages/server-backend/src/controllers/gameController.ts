@@ -71,7 +71,7 @@ export const startGame = (req: Request, res: Response): void => {
 
 export const getGameInfo = (req: Request, res: Response): void => {
     const { gameId } = req.params;
-    const  sessionId  = req.query.sessionId.toString();
+    const  sessionId  = req.query.sessionId?.toString();
     console.log(`req.query is a  ${typeof  req.query} req.query: `, req.query);
     console.log(`sessionId is a  ${typeof  sessionId} sessionId: `, sessionId);
     console.log(`getGameInfo: gameId ${gameId} sessionId: ${sessionId}`);
