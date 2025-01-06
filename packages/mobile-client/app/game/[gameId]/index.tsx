@@ -9,7 +9,9 @@ import {Link} from "expo-router";
 import {Player, useAppContext} from "@/utils/AppContext";
 import Logo from "@/app/components/Logo";
 import {makeGetRequest, makePostRequest} from "@/utils/requester";
-import {startSocket} from "@/utils/socket";
+import {socket, startSocket} from "@/utils/socket";
+import PlayerDisplay, {PlayerDisplayProps} from "@/app/components/PlayerDisplay";
+import UserNameComponent from "@/app/components/UserNameComponent";
 
 interface PlayerInfo {
     [playerId: string]: any;
@@ -39,11 +41,51 @@ interface GameInfoType {
 
 export default function Game() {
     const {screenSize, appStyles, sessionId, userInfo, getStoredJSON} = useAppContext();
-    
-
     const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
+    const [editUser, setEditUser] = useState<boolean>(true);
+
+
+    const toggleEditUser = () => {
+        setEditUser((prevState) => !prevState);
+    };
+    const sendMessage = (message : string) => {
+
+        console.log(`sendMessage: ${message}`);
+        socket.emit('clientMessage', {message});
+    };
+
+    useEffect(() => {
+        console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
+        if (userInfo.name) {
+            setEditUser(false);
+        }
+    }, [userInfo]);
+
+    const handleUserName = (info)=>{
+
+        console.warn("handleUserName ", info);
+        if(!player){
+            return;
+        }
+        
+        makePostRequest<GameInfoType>(`api/game/${gameId}/setPlayerName`, {playerName:info["name"], playerId:player.playerId})
+            .then((response) => {
+                console.log("setPlayerName response:", response);
+                setEditUser(false);
+                if(player.playerId === response.player?.playerId){
+                    setPlayer(response.player);
+                    sendMessage(`from:${player.playerId}\ngetGameInfo`);
+                }
+
+            }).catch((error) => {
+                console.log("setPlayerName failed:", error)
+            }
+        );
+        
+    };
+    
     const router = useRouter();
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
     console.log(`in gameId: ${gameId}`);
@@ -126,11 +168,29 @@ export default function Game() {
 
 
     console.log("playerName:", playerName);
-
+    console.log("players in game:", game?.players.map((p, index) => {
+        if(p.name === playerName){
+            return;
+        }
+        return p.name;
+    }));
+    
+    const  playerDisplayProps :PlayerDisplayProps = {
+        size: screenSize.corner,
+        player,
+        onPress :()=>{},
+    };
     return (
         <PageLayout
             cornerSize={screenSize.corner}
-            topLeftCorner={<Logo id="top-left-corner-icon"/> }
+            topLeftCorner={
+            <View>
+                {player && <PlayerDisplay player={player} onPress={toggleEditUser} size={screenSize.corner} playerNumber={1}/>}
+                {!player && <Logo id="top-left-corner-icon"/>}
+            </View>
+
+
+            }
             topContent={
                 <View style={appStyles.rowFlow}>
                     <Link href="/game/" asChild>
@@ -140,17 +200,25 @@ export default function Game() {
             }
             topRightCorner={<Text style={appStyles.largeText}>Right Corner</Text>}
 
+            
+            
             leftSideContent={
                 <View style={appStyles.columnFlow}>
                     <FrameButton title={playerName} onPress={()=>{}}></FrameButton>
-                    {game && game.players.map((item, index) => (
-                        <FrameButton title={item.name} onPress={()=>{}}></FrameButton>
-                    ))}
+                    {game && 
+                        game.players.map((p, index) => {
+                            if(p.name === playerName){
+                                return;
+                            }
+                            return <FrameButton key={index} title={p.name} onPress={()=>{}}></FrameButton>;
+                        })
+                    }
                 </View>
             }
             centralContent={
                 <View style={appStyles.columnFlow}>
                     <GameId gameId={gameId} />
+                    {editUser && <UserNameComponent user={{name:playerName}} setUserName={handleUserName}/>}
                     <Text style={appStyles.mediumText}>{playerName}</Text>
 
                 </View>
@@ -161,6 +229,7 @@ export default function Game() {
 
                     <Text style={[appStyles.smallText]}>session:{sessionId}</Text>
                     {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}
+                    <FrameButton title="Send" onPress={()=>sendMessage("random message")}></FrameButton>
                 </View>}
         />
 

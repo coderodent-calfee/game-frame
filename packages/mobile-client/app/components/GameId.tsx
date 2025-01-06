@@ -94,7 +94,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
         handleInput(newValue, index);
 
     };
-    const gameIdStyles= screenSize.width < 500 ? smallStyles : styles ;
+    const gameIdStyles= screenSize.width < 500 ? smallStyles :screenSize.width < 1500 ? styles : largeStyles;
     
     return (
         <View style={styles.container}>
@@ -104,13 +104,13 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
                     <View
                         key={index}
                         style={[gameIdStyles.fixedBox, { backgroundColor: colors[index] }]}>
-                        <Text style={gameIdStyles.fixedText}>{char || '-'}</Text>
+                        <Text style={[gameIdStyles.fixedText, char === '0' ? {fontFamily: 'Monospace'} : {}]}>{char || '-'}</Text>
                     </View>
                 ) : (
                     <TextInput
                         key={index}
                         id={`input-${index}`}
-                        style={[gameIdStyles.input, { borderColor: colors[index] }]}
+                        style={[gameIdStyles.input, { borderColor: colors[index] }, char === '0' ? {fontFamily: 'Monospace'} : {}]}
                         onChange={(e) => handleChange(e, index)}
                         onKeyPress={(e) => handleKeyPress(e, index)}
                         keyboardType="default"
@@ -167,7 +167,7 @@ const smallStyles = StyleSheet.create({
     input: {
         width: 40,
         height: 40,
-        fontSize: 30,
+        fontSize: 20,
         borderWidth: 2,
         margin: 5,
         borderRadius: 10,
@@ -184,6 +184,37 @@ const smallStyles = StyleSheet.create({
     },
     fixedText: {
         fontSize: 20,
+        color: 'white',
+    },
+});
+
+const largeStyles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    input: {
+        width: 100,
+        height: 100,
+        fontSize: 80,
+        borderWidth: 2,
+        margin: 5,
+        borderRadius: 10,
+        textAlign: 'center',
+        color: 'white',
+    },
+    fixedBox: {
+        width: 100,
+        height: 100,
+        margin: 5,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fixedText: {
+        fontSize: 80,
         color: 'white',
     },
 });

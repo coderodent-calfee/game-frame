@@ -97,3 +97,34 @@ export const getGameInfo = (req: Request, res: Response): void => {
     }
     res.status(200).json(gameInfo);
 };
+
+
+export const setPlayerName = (req: Request, res: Response): void => {
+
+    try {
+        const { gameId } = req.params;
+        const { playerId, playerName }: { playerId: string, playerName: string } = req.body;
+        console.log(`setPlayerName playerId ${playerId} name is ${playerName} game: ${gameId}`);
+        const game = GameService.getGameById(gameId);
+        if (!game) {
+            res.status(404).json({ error: "Game not found" });
+            return;
+        }
+        const player = game.players.find((p)=>{
+            return p.playerId == playerId;
+        });
+        if (!player) {
+            res.status(404).json({ error: "player not found" });
+            return;
+        }
+        const oldName = player.name;
+        player.name = playerName;
+        res.status(200).json({
+            message: `${oldName}changed to ${player.name}`,
+            game,
+            player
+        });
+    } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+    }
+};

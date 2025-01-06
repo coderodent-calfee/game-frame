@@ -38,11 +38,7 @@ export default function Index() {
         }
     }, [userInfo]);
 
-    const sendMessage = () => {
-        const message = `Hello from ${sessionId}`;
-        console.log(`sendMessage: ${message}`);
-        socket.emit('clientMessage', {message});
-    };
+
     
     const resetUser = () => {
         console.log(`reset User:`);
@@ -131,7 +127,7 @@ export default function Index() {
             }
             bottomContent={
                 <View style={appStyles.columnFlow}>
-                    <FrameButton title="Send" onPress={sendMessage}></FrameButton>
+
                     <Text style={[appStyles.largeText]}>width: {screenSize.width} height: {screenSize.height}</Text>
                     <Text style={[appStyles.smallText]}>{sessionId}</Text>
                 </View>

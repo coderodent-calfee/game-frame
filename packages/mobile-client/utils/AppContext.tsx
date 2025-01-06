@@ -40,8 +40,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [userInfo, setUserInfo] = useState<any>({});
     const figureScreenSize = ()=>{
         const dim = Dimensions.get('window');
-        const maxDim = Math.max(dim.height, dim.width);
-        const corner = maxDim > 1500 ? 200 : maxDim < 500 ? 75: 100;
+        const minDim = Math.min(dim.height, dim.width);
+        // screens: tv/computer width: 1536 height: 826
+        // mobile portrait: width: 412 height: 733
+
+        const corner = minDim > 800 ? 200 : minDim < 500 ? 75: 100;
         return({...dim, corner});
     };
     const [screenSize, setScreenSize] = useState(figureScreenSize());
