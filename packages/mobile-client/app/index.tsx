@@ -73,11 +73,11 @@ export default function Index() {
             console.warn(`newGame: no sessionId`);
             return;
         }
-        makePostRequest<GameType>('api/game/newGame', {sessionId})
+        makePostRequest<GameType>('api/game/newGame' )
             .then((response) => {
                 console.log("newGame created:", response);
                 const gameId = response['game'].gameId;
-                return makePostRequest<UserType>(`api/game/${gameId}/join`, {sessionId});
+                return makePostRequest<UserType>(`api/game/${gameId}/join`);
             })
             .then((response) => {
                 console.log("joinGame response:", response);

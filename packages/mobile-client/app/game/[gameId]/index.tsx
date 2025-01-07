@@ -120,9 +120,11 @@ export default function Game() {
         if((gamePlayer && gamePlayer[gameId])) {
             console.log("RWC gamePlayer[gameId]:", gamePlayer[gameId]);
         }
-        // in point of fact; we should just ask the server what our playerId is
-    
-        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams(gameSearchParams))
+      // in point of fact; we should just ask the server what our playerId is
+        if (player?.gameId === "Not Found") {
+            return;
+        }
+        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams())
             .then((response) => {
                 if(!response.game){
                     // why is it not error status?

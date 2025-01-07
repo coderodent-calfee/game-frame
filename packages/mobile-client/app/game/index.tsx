@@ -53,8 +53,11 @@ export default function Index() {
         if (!gameId || gameId.length !== 6) {
             return;
         }
-        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams({gameId}))
-            .then((response) => {
+        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams())
+          .then((response) => {
+            // the logic here is sound: response.game is now response.id
+            // because the json is now a game
+              // todo: fix-a-doo
                 if(!response.game){
                     return;
                 }
