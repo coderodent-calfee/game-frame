@@ -94,6 +94,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
         handleInput(newValue, index);
 
     };
+
     const gameIdStyles= screenSize.width < 500 ? smallStyles :screenSize.width < 1500 ? styles : largeStyles;
     
     return (

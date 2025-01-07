@@ -2,8 +2,21 @@
 import { TextInput, Text, View, StyleSheet } from 'react-native';
 import {useAppContext} from "@/utils/AppContext";
 
-const UserNameComponent = ({ user, setUserName }: { user: { name: string | null }, setUserName: (info: { name: string }) => void }) => {
-    const {appStyles } = useAppContext();
+interface User {
+  name: string | null;
+}
+
+interface UserNameComponentProps {
+    user: User;
+    setUserName: (info: { name: string }) => void;
+    placeholder?: string;
+    secure?: boolean;
+}
+
+// Main component
+const UserNameComponent = ({ user, setUserName, placeholder, secure }: UserNameComponentProps) => {
+    const { screenSize, appStyles } = useAppContext();
+    const userNameComponentStyles = screenSize.width < 500 ? smallStyles : screenSize.width < 1500 ? styles : largeStyles;
 
     const [nameInput, setNameInput] = useState<string>(user.name || '');
     useEffect(() => {
@@ -11,35 +24,54 @@ const UserNameComponent = ({ user, setUserName }: { user: { name: string | null 
     }, [user.name]);
 
     const handleNameChange = (text: string) => {
-        console.log("handleNameChange:", text );
-        
+        console.log("handleNameChange:", text);
+
         setNameInput(text);
     };
 
     const handleNameSubmit = () => {
-        setUserName({name : nameInput});
+        setUserName({ name: nameInput });
     };
     return (
-        <View style={styles.container}>
+        <View>
             {
                 <TextInput
-                    style={[styles.input, appStyles.largeText]}
+                    style={[userNameComponentStyles.input, appStyles.largeText]}
                     value={nameInput}
                     onChangeText={handleNameChange}
                     onSubmitEditing={handleNameSubmit}
-                    placeholder="Enter User Name"
+                    placeholder={placeholder ?? "Enter User Name"}
+                    secureTextEntry={ secure }
                 />
             }
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        marginTop: 20,
-        paddingHorizontal: 10,
+const smallStyles = StyleSheet.create({
+
+    input: {
+        margin: 6,
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'white',
     },
-    
+});
+const styles = StyleSheet.create({
+
+    input: {
+        margin: 8,
+        borderRadius: 7,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'white',
+    },
+});
+const largeStyles = StyleSheet.create({
+
     input: {
         margin: 10,
         borderRadius: 10,

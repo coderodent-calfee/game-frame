@@ -44,7 +44,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         // screens: tv/computer width: 1536 height: 826
         // mobile portrait: width: 412 height: 733
 
-        const corner = minDim > 800 ? 200 : minDim < 500 ? 75: 100;
+        const corner = minDim > 800 ? 200 : minDim < 500 ? 90: 100;
         return({...dim, corner});
     };
     const [screenSize, setScreenSize] = useState(figureScreenSize());
@@ -236,4 +236,5 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'column',
     },
+
 });
