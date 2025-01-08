@@ -27,6 +27,7 @@ interface GameType {
 }
 
 interface GameInfoType {
+    message?: string;
     game: GameType;
     player?: Player;
 }
@@ -35,7 +36,7 @@ interface GameInfoType {
 export default function Index() {
     const [game, setGame] = useState<GameType | undefined>();
     const [gameId, setGameId] = useState<string>();
-    const { sessionId, userInfo, setUserInfo ,screenSize, appStyles } = useAppContext();
+    const { token, sessionId, userInfo, setUserInfo ,screenSize, appStyles } = useAppContext();
     const [editUser, setEditUser] = useState<boolean>(false);
     const router = useRouter();
 
@@ -53,7 +54,7 @@ export default function Index() {
         if (!gameId || gameId.length !== 6) {
             return;
         }
-        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams())
+        makeGetRequest<GameInfoType>(`api/game/${gameId}/info/`, new URLSearchParams())
           .then((response) => {
             // the logic here is sound: response.game is now response.id
             // because the json is now a game
@@ -73,7 +74,11 @@ export default function Index() {
         if(!game || !gameId || gameId.length !== 6){
             return;
         }
-        makePostRequest<UserType>(`api/game/${gameId}/join`, {sessionId})
+        makePostRequest<GameInfoType>({
+                path: `api/game/${gameId}/join/`, 
+                token, 
+                params: {userId : userInfo.userId}
+            })
             .then((response) => {
                 console.log("joinGame response:", response);
                 router.navigate(`game/${gameId}/`, {key:"JoinGame"}); // key still needed?

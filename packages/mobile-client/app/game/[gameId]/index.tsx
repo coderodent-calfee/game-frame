@@ -40,7 +40,7 @@ interface GameInfoType {
 }
 
 export default function Game() {
-    const {screenSize, appStyles, sessionId, userInfo, getStoredJSON} = useAppContext();
+    const {token, screenSize, appStyles, sessionId, userInfo, getStoredJSON} = useAppContext();
     const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
@@ -69,8 +69,15 @@ export default function Game() {
         if(!player){
             return;
         }
-        
-        makePostRequest<GameInfoType>(`api/game/${gameId}/setPlayerName`, {playerName:info["name"], playerId:player.playerId})
+
+        makePostRequest<GameInfoType>({
+                path: `api/game/${gameId}/setPlayerName/`,
+                token,
+                params:{
+                    playerName : info["name"], 
+                    playerId : player.playerId
+                }
+            })
             .then((response) => {
                 console.log("setPlayerName response:", response);
                 setEditUser(false);

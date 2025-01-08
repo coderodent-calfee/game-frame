@@ -24,8 +24,6 @@ const UserNameComponent = ({ user, setUserName, placeholder, secure }: UserNameC
     }, [user.name]);
 
     const handleNameChange = (text: string) => {
-        console.log("handleNameChange:", text);
-
         setNameInput(text);
     };
 
@@ -40,6 +38,7 @@ const UserNameComponent = ({ user, setUserName, placeholder, secure }: UserNameC
                     value={nameInput}
                     onChangeText={handleNameChange}
                     onSubmitEditing={handleNameSubmit}
+                    onBlur={handleNameSubmit}
                     placeholder={placeholder ?? "Enter User Name"}
                     secureTextEntry={ secure }
                 />

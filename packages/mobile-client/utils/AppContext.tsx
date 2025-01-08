@@ -1,7 +1,8 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {handleSessionUser, startSocket} from "@/utils/socket"; // For React Native
+import {handleSessionUser, startSocket} from "@/utils/socket"; 
+
 
 // Define the shape of the context state
 interface AppContextType {
@@ -37,6 +38,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Create a provider component
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [sessionId, setSessionId] = useState<string>(generateSessionId());
+    const [token, setToken] = useState<string>();
+    const [jwtRefresh, setJwtRefresh] = useState<string>();
     const [userInfo, setUserInfo] = useState<any>({});
     const figureScreenSize = ()=>{
         const dim = Dimensions.get('window');
@@ -78,6 +81,17 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         });
     }, [screenSize]);
 
+    const signIn = ({access, refresh, userId}:{access: string, refresh: string, userId: string | undefined} ): boolean => {
+        setToken(access);
+        setJwtRefresh(refresh);
+        setUserInfo((prevState) => { return { ...prevState, userId: userId }; });
+        return userId !== undefined;
+    };
+
+    // todo: there must be more to do here
+    const signOut = (): void => {
+        setToken(undefined);
+    };
 
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
@@ -154,18 +168,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         handleSessionUser(sessionId, userInfo);
     }, [sessionId, userInfo]);
 
-    
     return (
         <AppContext.Provider
             value={{
-                sessionId,
-                setSessionId,
-                userInfo,
-                setUserInfo,
-                getStoredJSON,
-                setStoredJSON,
-                getStoredString,
-                setStoredString,
+                token, 
+                signIn, signOut,
+                sessionId, setSessionId,
+                userInfo,  setUserInfo,
+                getStoredJSON, setStoredJSON,
+                getStoredString, setStoredString,
                 removeStoredItem,
                 addPlayerToGame,
                 screenSize,

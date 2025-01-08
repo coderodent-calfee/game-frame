@@ -20,40 +20,21 @@ interface UserType {
     playerId: string;
 }
 
-interface UserStateType {
-    loggedIn: boolean;
-    signedUp: boolean;
+interface JwtUserId {
+    access: string;
+    refresh: string;
+    userId: string;
 }
 
 
 export default function Index() {
-    const { appStyles, sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame, screenSize } = useAppContext();
-    const [editUser, setEditUser] = useState<boolean>(true);
-    const [userState, setUserState] = useState<UserStateType>({ loggedIn: false, signedUp: false });
-    const [displayState, setDisplayState] = useState<UserStateType>({ loggedIn: false, signedUp: false });
+    const {signIn, signOut, token, appStyles, sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame, screenSize } = useAppContext();
 
-    //const navigation = useNavigation();
     const router = useRouter();
-
-    const toggleEditUser = () => {
-        setEditUser((prevState) => !prevState);
-    };
-
-
-    useEffect(() => {
-        console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
-        if (userInfo.name) {
-            setEditUser(false);
-        }
-    }, [userInfo]);
-
-
 
     const resetUser = () => {
         console.log(`reset User:`);
-        //setUserInfo({});
-        //setEditUser(true);
-        setUserState((prevState) => { return { ...prevState, signedUp: false }; });
+        setUserInfo({});
     };
 
     const generateId = (): string => {
@@ -63,66 +44,129 @@ export default function Index() {
     }
 
     const handleUserName = (info) => {
-        console.log("handleUserName ", info);
+        if (!info || !info.name || !info.name.length) {
+            return;
+        }
+        setUserInfo((prevState) => { return { ...prevState, username: info.name }; });
     };
     
     const handlePassword = (info) => {
-        console.log("handlePassword ", info);
+        if (!info || !info.name || !info.name.length) {
+            return;
+        }
+        setUserInfo((prevState) => { return { ...prevState, password: info.name }; });
     };
 
     const handleEmail= (info) => {
-        console.log("handlePassword ", info);
+        if (!info || !info.name || !info.name.length) {
+            return;
+        }
+        setUserInfo((prevState) => { return { ...prevState, email: info.name }; });
     };
 
     const handleLogin = (info) => {
         console.log("handleLogin ", info);
-        setUserState((prevState) => { return { ...prevState, loggedIn: true }; });
+
+        const { username, password } = userInfo;
+        if (!(username && password)) {
+            return;
+        }
+
+        makePostRequest<JwtUserId>({
+                path : 'api/accounts/token/', 
+                body : {
+                    username, 
+                    password
+                }
+            })
+            .then((response) => {
+                console.log("api/accounts/token/:", response);
+                const success = signIn(response);
+
+                // TODO: next get the user info to store in local and the react state
+
+            }).catch((error) => {
+            console.log("api/accounts/token/ failed:", error)
+        });
+
     };
 
     const handleLogout = (info) => {
         console.log("handleLogin ", info);
-        setUserState((prevState) => { return { ...prevState, loggedIn: false }; });
+        signOut();
+        
     };
 
-    const handleSignUp = (info) => {
-        console.log("handleSignUp ", info);
-        setUserState((prevState) => { return { ...prevState, signedUp: true }; });
+    const handleSignUp = (event) => {
+        console.log("handleSignUp ", userInfo);
+
+        const { username, email, password } = userInfo;
+        if (!(username && email && password)) {
+            return;
+        }
+
+        makePostRequest<JwtUserId>({
+                path : 'api/accounts/register/',
+                body : {
+                    email, 
+                    username, 
+                    password
+                }
+            })
+            .then((response) => {
+                console.log('api/accounts/register/: ', response);
+                const success = signIn(response);
+                
+                // TODO: next get the user info to store in local and the react state
+                
+                
+            }).catch((error) => {
+                console.log("api/accounts/register/ failed:", error)
+            });
+
     };
 
     const newGame = () => {
         console.log(`newGame`);
-        if (!sessionId) {
-            console.warn(`newGame: no sessionId`);
+        if (!token) {
+            console.warn(`newGame: no JWT token`);
             return;
         }
-        makePostRequest<GameType>('api/game/newGame')
+        makePostRequest<GameType>({
+                path: 'api/game/newGame/', 
+                token,
+                params : {
+                    userId : userInfo.userId
+                }
+            })
             .then((response) => {
                 console.log("newGame created:", response);
                 const gameId = response['game'].gameId;
-                return makePostRequest<UserType>(`api/game/${gameId}/join`);
+                return makePostRequest<UserType>({
+                    path : `api/game/${gameId}/join/`, 
+                    token,
+                    params : {
+                        userId: userInfo.userId
+                    }
+                });
             })
             .then((response) => {
                 console.log("joinGame response:", response);
                 const gameId = response['game'].gameId;
                 const playerInfo = response['player'];
-                addGamePlayer(gameId, playerInfo).then(() => {
-                    router.navigate(`game/${gameId}/`, { key: "JoinGame" }); // key still needed?
-                });
+                router.navigate(`game/${gameId}/`, { key: "JoinGame" }); // key still needed?
             }).catch((error) => {
                 console.log("newGame failed:", error)
             });
     }
 
-    // flow: username and pw are inputs, when you press sign up or log in we use that username and pw in the appropriate handler
-    const showLoginInput = !(displayState.loggedIn || userState.loggedIn);
-    const showSignUpInput = !(displayState.signedUp || displayState.loggedIn || userState.signedUp || userState.loggedIn);
 
     return (
         <PageLayout
             cornerSize={screenSize.corner}
             topLeftCorner={<Logo id="top-left-corner-icon" />}
             topContent={
-                userInfo.name && userInfo.name.length &&
+                token &&
                 <View style={appStyles.rowFlow}>
                     <Link href="/game" asChild>
                         <FrameButton title="Look For Game" onPress={() => {
@@ -140,35 +184,31 @@ export default function Index() {
 
             leftSideContent={
                 <View style={appStyles.columnFlow}>
-
-                    {!userState.loggedIn && !userState.signedUp && < FrameButton title="Sign Up"
-                        onPress={() => {
-                            setDisplayState({ loggedIn: false, signedUp: false });
-                        }}></FrameButton>}
-                    {!userState.loggedIn && !userState.signedUp && <FrameButton title="Log In"
-                        onPress={() => {
-                            setDisplayState({ loggedIn: false, signedUp: true });
-                        }}></FrameButton>}
-                    {userState.loggedIn && <FrameButton title="Log Out" onPress={handleLogout}></FrameButton>}
+                    {token && <FrameButton title="Log Out" onPress={handleLogout}></FrameButton>}
                 </View>
             }
             centralContent={
-                <View style={[appStyles.columnFlow, { marginTop:10 }]}>
+                <View style={[appStyles.columnFlow]}>
 
-                    {showLoginInput && <UserNameComponent user={userInfo} setUserName={handleUserName} />}
-                    {showLoginInput && <UserNameComponent secure={true} placeholder={'Enter Password'} user={{ name: userInfo.password }} setUserName={handlePassword} />}
-                    {showSignUpInput && <UserNameComponent placeholder={'Enter Email'} user={{ name: userInfo.email }} setUserName={handleEmail} />}
+                    {!token && <UserNameComponent user={{ name: userInfo.username }} setUserName={handleUserName} />}
+                    {!token && !userInfo.username && <Text style={[appStyles.smallText]}>User Name is Required</Text>}
+                    {!token && <UserNameComponent secure={true} placeholder={'Enter Password'} user={{ name: userInfo.password }} setUserName={handlePassword} />}
+                    {!token && !userInfo.password && <Text style={[appStyles.smallText]}>Password is Required</Text>}
+                    {!token && <UserNameComponent placeholder={'Enter Email'} user={{ name: userInfo.email }} setUserName={handleEmail} />}
+                    {!token && !userInfo.email && <Text style={[appStyles.smallText]}>Email is Required to Sign Up</Text>}
 
                 </View>
             }
             bottomContent={
                 <View style={appStyles.columnFlow}>
                     <View style={[appStyles.rowFlow, { flex: "initial", justifyContent: "space-between" }]}>
-                        {showSignUpInput && <FrameButton title="Sign Up" onPress={handleSignUp}></FrameButton>}
-                        {showLoginInput && userState.signedUp && <FrameButton title="Log In" onPress={handleLogin}></FrameButton>}
-                        {showLoginInput && <FrameButton title="Clear" onPress={() => { console.log("clear") }}></FrameButton>}
+                        {!token && userInfo.email && <FrameButton title="Sign Up" onPress={handleSignUp}></FrameButton>}
+                        {!token && <FrameButton title="Log In" onPress={handleLogin}></FrameButton>}
+                        {!token && <FrameButton title="Clear" onPress={() => { console.log("clear") }}></FrameButton>}
                     </View>
-                    {!userState.loggedIn && <FrameButton title="Reset User" onPress={resetUser}></FrameButton>}
+                    {!token && <FrameButton title="Reset User" onPress={resetUser}></FrameButton>}
+                    {userInfo.userId && <Text style={[appStyles.smallText]}>userId: {userInfo.userId}</Text>}
+                    {token && <Text style={[appStyles.smallText]}>JSON Web Token Present</Text>}
                 </View>
             }
         />
