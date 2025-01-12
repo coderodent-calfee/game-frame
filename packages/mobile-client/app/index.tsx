@@ -23,7 +23,7 @@ interface UserType {
 interface JwtUserId {
     access: string;
     refresh: string;
-    userId: string;
+    userId?: string;
 }
 
 
@@ -81,7 +81,7 @@ export default function Index() {
             })
             .then((response) => {
                 console.log("api/accounts/token/:", response);
-                const success = signIn(response);
+                signIn(response);
 
                 // TODO: next get the user info to store in local and the react state
 
@@ -92,7 +92,7 @@ export default function Index() {
     };
 
     const handleLogout = (info) => {
-        console.log("handleLogin ", info);
+        console.log("handleLoout ", info);
         signOut();
         
     };

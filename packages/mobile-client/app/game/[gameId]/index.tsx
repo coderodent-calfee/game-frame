@@ -9,16 +9,12 @@ import {Link} from "expo-router";
 import {Player, useAppContext} from "@/utils/AppContext";
 import Logo from "@/app/components/Logo";
 import {makeGetRequest, makePostRequest} from "@/utils/requester";
-import {socket, startSocket} from "@/utils/socket";
+import socket from "@/utils/socket";
 import PlayerDisplay, {PlayerDisplayProps} from "@/app/components/PlayerDisplay";
 import UserNameComponent from "@/app/components/UserNameComponent";
 
 interface PlayerInfo {
     [playerId: string]: any;
-}
-
-interface GamePlayerMap {
-    [gameId: string]: PlayerInfo;
 }
 
 export interface Player {
@@ -36,26 +32,40 @@ interface GameType {
 }
 interface GameInfoType {
     game: GameType;
-    player?: Player;
+    player?: Player[];
 }
 
 export default function Game() {
-    const {token, screenSize, appStyles, sessionId, userInfo, getStoredJSON} = useAppContext();
-    const [gamePlayer, setGamePlayer] = useState<GamePlayerMap | undefined>();
+    const {
+        token, 
+        screenSize, 
+        appStyles, 
+        sessionId, 
+        userInfo, 
+        getStoredJSON,
+        currentGameId, setCurrentGameId,
+    } = useAppContext();
+    const [gamePlayerState, setGamePlayerState] = useState<string>("Looking for Player");
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
     const [editUser, setEditUser] = useState<boolean>(true);
 
-
     const toggleEditUser = () => {
         setEditUser((prevState) => !prevState);
     };
+
     const sendMessage = (message : string) => {
-
         console.log(`sendMessage: ${message}`);
-        socket.emit('clientMessage', {message});
+        socket.clientMessage({message});
     };
+    const { gameId } = useLocalSearchParams<{ gameId: string }>();
+    console.log(`according to useLocalSearchParams in gameId: ${gameId}`);
 
+    useEffect(() => {
+        console.log(`useEffect [gameId]:`, gameId);
+        setCurrentGameId(gameId);
+    }, [gameId, token]);
+    
     useEffect(() => {
         console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
         if (userInfo.name) {
@@ -64,12 +74,10 @@ export default function Game() {
     }, [userInfo]);
 
     const handleUserName = (info)=>{
-
         console.warn("handleUserName ", info);
         if(!player){
             return;
         }
-
         makePostRequest<GameInfoType>({
                 path: `api/game/${gameId}/setPlayerName/`,
                 token,
@@ -92,103 +100,56 @@ export default function Game() {
         );
         
     };
-    
-    const router = useRouter();
-    const { gameId } = useLocalSearchParams<{ gameId: string }>();
-    console.log(`in gameId: ${gameId}`);
-    console.log(`gamePlayer: `, gamePlayer);
-
-    const setPlayerNotFound = (): void => {
-        setPlayer({gameId: "Not Found", name: "Not Found", playerId: "Not Found"});
-    };
 
     const isEmpty = (obj: object): boolean => {
         return Object.keys(obj).length === 0;
     };
-    useEffect(()=> {
-        // getting here we should have saved the playerID in the localstore (but could put in a query)
-        if( gamePlayer === undefined){
-            // we came to the game, but we still must be sure we belong here
-            getStoredJSON('gamePlayer').then((storedGamePlayerInfo)=>{
-                if(storedGamePlayerInfo){
-                    if(isEmpty(storedGamePlayerInfo)){return;}
-                    setGamePlayer(storedGamePlayerInfo);
-                }
-            });
-            // still loading 
-        }
-    }, []);
+
     
     useEffect(()=>{
-        const gameSearchParams = {gameId};
-        if(sessionId) {
-            gameSearchParams["sessionId"] = sessionId;
-        }
-        if((gamePlayer && gamePlayer[gameId])) {
-            console.log("RWC gamePlayer[gameId]:", gamePlayer[gameId]);
-        }
-      // in point of fact; we should just ask the server what our playerId is
-        if (player?.gameId === "Not Found") {
-            return;
-        }
-        makeGetRequest<GameInfoType>(`api/game/${gameId}/info`, new URLSearchParams())
-            .then((response) => {
-                if(!response.game){
-                    // why is it not error status?
-                    // todo: navigate away from here: no game exists
+        console.log(`useEffect: [token, sessionId] to get game info and player id`);
+        if(gameId && token && sessionId){
+            makeGetRequest<GameInfoType>({
+                path : `api/game/${gameId}/info`,
+                token,
+                params : {
+                    sessionId: sessionId
                 }
-                setGame(response.game);
-                console.log("RWC GameInfo response:", response);
-                if(response.player){
-                    console.log("RWC player:", player);
-                    if(player?.playerId !== response.player.playerId){
-                        setPlayer(response.player);
+            })
+                .then((response) => {
+                    if(!response.game){
+                        console.log("no game?!:");
+                        // why is it not error status?
+                        // todo: navigate away from here: no game exists
                     }
-                }
-                else {
-                    //todo: this may no longer be needed
-                    console.log("no player:", game);
+                    console.log("GameInfo response:", response);
+                    setGame(response.game);
 
-                    if((gamePlayer && gamePlayer[gameId])) {
-                        console.log("RWC no player and gamePlayer[gameId]:", gamePlayer[gameId]);
-                        const gamePlayers = Object.keys(gamePlayer[gameId]);
-                        response.game.players.forEach((p)=>{
-                            if( gamePlayers.includes( p.playerId )){
-                                if(player?.playerId !== p.playerId) {
-
-                                    setPlayer(p);
-                                }
-                            }
-                        });
+                    if(response.player){
+                        console.log("my player(s):", response.player);
+                        if(response.player.length == 1){
+                            setPlayer(response.player[0]);
+                        }
                     }
+                    else {
+                        console.log("no response.player:", game);
+                    }
+                }).catch((error) => {
+                    console.log("GameInfo failed:", error);
                 }
-            }).catch((error) => {
-                console.log("GameInfo failed:", error);
-                setPlayerNotFound();
-            }
-        );
-    }, [player, gamePlayer]);
-
-    console.log(`Player: `, player);
-    let playerName : string = "Looking";
-    if(player){
-        playerName = player['name'];
-    }
-
-
-    console.log("playerName:", playerName);
-    console.log("players in game:", game?.players.map((p, index) => {
-        if(p.name === playerName){
-            return;
+            );
         }
-        return p.name;
-    }));
+        // in point of fact; we should just ask the server what our playerId is
+
+    }, [gameId, token, sessionId]);
+
     
     const  playerDisplayProps :PlayerDisplayProps = {
         size: screenSize.corner,
         player,
         onPress :()=>{},
     };
+    
     return (
         <PageLayout
             cornerSize={screenSize.corner}
@@ -207,16 +168,14 @@ export default function Game() {
                     </Link>
                 </View>
             }
-            topRightCorner={<Text style={appStyles.largeText}>Right Corner</Text>}
-
-            
+            topRightCorner={<Text style={appStyles.mediumText}>width: {screenSize.width} height: {screenSize.height}</Text>}
             
             leftSideContent={
                 <View style={appStyles.columnFlow}>
-                    <FrameButton title={playerName} onPress={()=>{}}></FrameButton>
+                    { player && <FrameButton title={player.name} onPress={()=>{}}></FrameButton> }
                     {game && 
                         game.players.map((p, index) => {
-                            if(p.name === playerName){
+                            if(p.name === player?.name){
                                 return;
                             }
                             return <FrameButton key={index} title={p.name} onPress={()=>{}}></FrameButton>;
@@ -227,18 +186,17 @@ export default function Game() {
             centralContent={
                 <View style={appStyles.columnFlow}>
                     <GameId gameId={gameId} />
-                    {editUser && <UserNameComponent user={{name:playerName}} setUserName={handleUserName}/>}
-                    <Text style={appStyles.mediumText}>{playerName}</Text>
-
+                    {player && editUser && <UserNameComponent user={{name:player.name}} setUserName={handleUserName}/>}
+                    {player && <Text style={appStyles.mediumText}>{player.name}</Text>}
+                    {gamePlayerState && <Text style={appStyles.largeText}>{gamePlayerState}</Text>}
                 </View>
             }
             bottomContent={
                 <View style={appStyles.columnFlow}>
-                    <Text style={[appStyles.largeText]}>width: {screenSize.width} height: {screenSize.height}</Text>
-
-                    <Text style={[appStyles.smallText]}>session:{sessionId}</Text>
-                    {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}
                     <FrameButton title="Send" onPress={()=>sendMessage("random message")}></FrameButton>
+                    {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}
+                    {userInfo.userId && <Text style={[appStyles.smallText]}>userId: {userInfo.userId}</Text>}
+                    {token && <Text style={[appStyles.smallText]}>JSON Web Token Present</Text>}
                 </View>}
         />
 

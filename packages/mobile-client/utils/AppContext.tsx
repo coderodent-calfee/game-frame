@@ -1,8 +1,9 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {handleSessionUser, startSocket} from "@/utils/socket"; 
-
+import socket from "@/utils/socket";
+import {makePostRequest} from "@/utils/requester";
+import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEmitter";
 
 // Define the shape of the context state
 interface AppContextType {
@@ -32,15 +33,25 @@ export interface Player {
     gameId: string;
 }
 
+interface AuthenticatedSessionId {
+    "message": string;
+    "received_data": object;
+    "sessionId": string;
+}
+
+
 // Create the context
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Create a provider component
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-    const [sessionId, setSessionId] = useState<string>(generateSessionId());
+    const [sessionId, setSessionId] = useState<string>();
     const [token, setToken] = useState<string>();
+    const [seen, setSeen] = useState<string>();
+    const [currentGameId, setCurrentGameId] = useState<string>();
     const [jwtRefresh, setJwtRefresh] = useState<string>();
     const [userInfo, setUserInfo] = useState<any>({});
+    const [dimensionsSubscription, setDimensionsSubscription] = useState<EmitterSubscription>();
     const figureScreenSize = ()=>{
         const dim = Dimensions.get('window');
         const minDim = Math.min(dim.height, dim.width);
@@ -53,45 +64,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [screenSize, setScreenSize] = useState(figureScreenSize());
     const [appStyles, setAppStyles] = useState({...styles});
 
-
-    useEffect(() => {
-        const handleResize = () => {
-            setScreenSize(figureScreenSize);
-        };
-        
-        Dimensions.addEventListener('change', handleResize);
-
-        return () => {
-            Dimensions.removeEventListener('change', handleResize);
-        };
-    }, []);
     const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
-
-    useEffect(() => {
-        // screens: tv/computer width: 1536 height: 826
-        // mobile portrait: width: 412 height: 733
-        const screenWidth = screenSize.width;
-        const fontStyleLarge = screenWidth > 1500 ? styles.largeText : screenWidth < 500 ? styles.smallText : styles.mediumText;
-        const fontStyleMedium = screenWidth > 1500 ? styles.mediumText : screenWidth < 500 ? styles.smallestText : styles.smallText;
-        const fontStyleSmall = screenWidth > 1500 ? styles.smallText : styles.smallestText;
-        setAppStyles({...styles,
-            largeText: fontStyleLarge,
-            mediumText: fontStyleMedium,
-            smallText: fontStyleSmall,
-        });
-    }, [screenSize]);
-
-    const signIn = ({access, refresh, userId}:{access: string, refresh: string, userId: string | undefined} ): boolean => {
-        setToken(access);
-        setJwtRefresh(refresh);
-        setUserInfo((prevState) => { return { ...prevState, userId: userId }; });
-        return userId !== undefined;
-    };
-
-    // todo: there must be more to do here
-    const signOut = (): void => {
-        setToken(undefined);
-    };
 
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
@@ -100,10 +73,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const getStoredJSON = async (key: string): Promise<object | null> => {
+        console.log('getStoredJSON', key);
         return getStoredString(key).then(info => info && JSON.parse(info));
     };
 
     const setStoredJSON = async (key: string, value: object): Promise<void> => {
+        console.log(`setStoredJSON ${key}`, value);
         return setStoredString(key, JSON.stringify(value))
     };
 
@@ -140,19 +115,97 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         return gamePlayerMap;
     }
 
+    const signIn = ({access, refresh, userId}:{access: string, refresh: string, userId: string | undefined} ): boolean => {
+        console.log('sign in: got token, refresh, and userId:', userId);
+        setToken(access);
+        setJwtRefresh(refresh);
+        if(userId){
+            setUserInfo((prevState) => { return { ...prevState, userId: userId }; });
+        }
+        return userId !== undefined;
+    };
+
+    // todo: there must be more to do here
+    const signOut = (): void => {
+        setToken(undefined);
+    };
+
+    interface JwtUserId {
+        access: string;
+        refresh: string;
+        userId?: string;
+    }
+
+
+    const handleRefresh = async () => {
+        console.log("handleRefresh ");
+        // todo fail if nothing seen
+
+        makePostRequest<JwtUserId>({
+            path : 'api/accounts/token/refresh/',
+            body : {
+                "grant_type" : "refresh_token",
+                "refresh" : jwtRefresh,
+            }
+        })
+        .then((response) => {
+            console.log("api/accounts/token/refresh/:", response);
+            signIn(response);
+        }).catch((error) => {
+            console.log("api/accounts/token/refresh/ failed:", error)
+            console.log("api/accounts/token/refresh/ response:", error.response)
+        });
+
+    };    
+    
+// Send session user data when sessionId or userInfo changes
+//     useEffect(() => {
+//         if (sessionId) {
+//             socket.handleSessionUser(sessionId, userInfo);
+//         }
+//     }, [sessionId, userInfo]);
+    
     useEffect(() => {
-        const loadData = async () => {
+        const handleResize = () => {
+            setScreenSize(figureScreenSize());
+        };
+        
+//        Dimensions.addEventListener('change', handleResize);
+        setDimensionsSubscription(Dimensions.addEventListener('change', handleResize))
+        
+        return () => {
+//            Dimensions.removeEventListener('change', handleResize);
+            dimensionsSubscription?.remove();
+            setDimensionsSubscription(None)
+        };
+    }, []);
+
+
+    useEffect(() => {
+        // Load stored data on mount
+        const loadUserInfo = async () => {
+            console.log("AppContext useEffect[] load('userInfo')")
             const storedUserInfo = await getStoredJSON('userInfo');
             if (storedUserInfo) {
-                console.log(`Loaded stored user info: ${storedUserInfo}`);
+                console.log(`Loaded stored user info:`, storedUserInfo);
                 setUserInfo(storedUserInfo);
             }
         };
+        const loadSeen = async () => {
+            console.log("AppContext useEffect[] loadSeen")
+            const storedSeen = await getStoredJSON('seen');
+            if (storedSeen) {
+                console.log(`Loaded stored seen:`, storedSeen);
+                setJwtRefresh(storedSeen);
+            }
+        };
 
-        loadData(); // Load stored data on mount
+        loadSeen();
+        loadUserInfo(); 
     }, []);
 
     useEffect(() => {
+        console.log("AppContext useEffect[userInfo] setStoredJSON('userInfo')", userInfo)
         const saveData = async () => {
             await setStoredJSON('userInfo', userInfo);
         };
@@ -160,27 +213,89 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             saveData(); // Save data if userInfo changes
         }
     }, [userInfo]);
-    
-    // Client socket communication
-    useEffect(startSocket, []);
 
     useEffect(() => {
-        handleSessionUser(sessionId, userInfo);
-    }, [sessionId, userInfo]);
+        console.log("AppContext useEffect[jwtRefresh] setStoredJSON('seen')", jwtRefresh)
+        const saveData = async () => {
+            await setStoredJSON('seen', jwtRefresh);
+        };
+        if (jwtRefresh) {
+            saveData(); // Save data if userInfo changes
+        }
+    }, [jwtRefresh]);    
+    
+    useEffect(() => {
+        // screens: tv/computer width: 1536 height: 826
+        // mobile portrait: width: 412 height: 733
+        const screenWidth = screenSize.width;
+        const fontStyleLarge = screenWidth > 1500 ? styles.largeText : screenWidth < 500 ? styles.smallText : styles.mediumText;
+        const fontStyleMedium = screenWidth > 1500 ? styles.mediumText : screenWidth < 500 ? styles.smallestText : styles.smallText;
+        const fontStyleSmall = screenWidth > 1500 ? styles.smallText : styles.smallestText;
+        setAppStyles({...styles,
+            largeText: fontStyleLarge,
+            mediumText: fontStyleMedium,
+            smallText: fontStyleSmall,
+        });
+    }, [screenSize]);
+
+
+    useEffect(() => {
+        console.log(`appcontext useEffect [seen, sessionId]: ${jwtRefresh}/${sessionId}`);
+        if(currentGameId && sessionId){
+            if(jwtRefresh) {
+                makePostRequest<AuthenticatedSessionId>({
+                    path: 'api/accounts/protected/',
+                    token,
+                    body : {
+                        sessionId
+                    }
+                })
+                    .then((response) => {
+                        console.log("AuthenticatedSessionId response:", response);
+                        socket.handleSessionUser(sessionId, userInfo);
+                    })
+                    .catch((error) => {3
+                        console.log("AuthenticatedSessionId failed:", error);
+                        console.log("AuthenticatedSessionId status code:", error.response.status);
+                        // if the response indicates that our token is expired, we can try to refresh it
+                        handleRefresh();
+                    });
+            }
+            else{
+                console.log("AuthenticatedSessionId cannot be done; we should go back to home:")
+            }
+        }
+    }, [ jwtRefresh, sessionId, currentGameId]);
+
+
+    useEffect(() => {
+        console.log("AppContext useEffect[currentGameId] startSocket(currentGameId)")
+        
+        if(currentGameId){
+            socket.startSocket(currentGameId);
+            setSessionId(generateSessionId());
+        }
+
+        return () => {
+            socket.closeSocket(); // Clean up on component unmount
+        };
+    }, [currentGameId]);
+
 
     return (
         <AppContext.Provider
             value={{
-                token, 
-                signIn, signOut,
-                sessionId, setSessionId,
-                userInfo,  setUserInfo,
+                addPlayerToGame,
+                appStyles,
+                currentGameId, setCurrentGameId,
                 getStoredJSON, setStoredJSON,
                 getStoredString, setStoredString,
                 removeStoredItem,
-                addPlayerToGame,
                 screenSize,
-                appStyles
+                sessionId, setSessionId,
+                signIn, signOut,
+                token, 
+                userInfo,  setUserInfo,
             }}
         >
             {children}

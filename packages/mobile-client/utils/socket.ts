@@ -1,39 +1,76 @@
-﻿// src/socket.ts
-import { io } from 'socket.io-client';
-import {environment} from "@/utils/environment";
-const PORT = environment['SOCKET_PORT'] || 3000;
+﻿import { environment } from "@/utils/environment";
+
+const PORT = environment['SOCKET_PORT'] || 8000; // Use your Django ASGI server's port
 const URL = environment['SERVER_URL'] || '192.168.0.249';
+const SOCKET_URL = `ws://${URL}:${PORT}/ws/game/`; // Update with your WebSocket route
 
-// Create and export a single socket instance
-export const socket = io(`http://${URL}:${PORT}`, {
-    transports: ['websocket'],
-    jsonp: false,
-});
+// Create a WebSocket instance
+let socket: WebSocket | null = null;
 
-export const startSocket = () => {
-    // When the client connects to the server
-    socket.on('connect', () => {
-        console.log('Connected with socket ID:', socket.id);
-    });
+// Start and manage the WebSocket connection
+export const startSocket = (gameId) => {
+    if (!socket || socket.readyState === WebSocket.CLOSED) {
+        socket = new WebSocket(SOCKET_URL + `${gameId}/`);
 
-    socket.on('message', (data) => {
-        console.log(`Received message:`, data);
-    });
+        socket.onopen = () => {
+            console.log('Connected to WebSocket');
+        };
 
-    // Cleanup listener on unmount
-    return () => {
-        socket.off('message');
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('Message from server:', data);
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onclose = (event) => {
+            console.log(`WebSocket closed: ${event.code} - ${event.reason}`);
+        };
+    }
+};
+
+// Handle sending session user data
+export const handleSessionUser = (sessionId: string, userInfo: any) => {
+    console.log('*** handleSessionUser sending sessionId, userId');
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.warn('WebSocket is not open. Cannot send data.');
+        return;
+    }
+
+    const sessionUserData = {
+        type: 'sessionUser', // Add a type field to distinguish messages
+        sessionId,
+        userId : userInfo.userId,
     };
+
+    console.log('*** Sending session user data:', sessionUserData);
+    socket.send(JSON.stringify(sessionUserData));
 };
 
-export const handleSessionUser = (sessionId, userInfo) =>  {
-    // When the client connects to the server
-    console.log(`sessionId: ${sessionId}`);
-    if(!sessionId){ return; }
-    console.log(`handleSessionUser userInfo:`, userInfo);
-
-    const sessionUserData = {sessionId, userInfo};
-    socket.emit('sessionUser', sessionUserData);
+// Close the WebSocket connection
+export const closeSocket = () => {
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
 };
 
-export default {socket, startSocket, handleSessionUser};
+export const clientMessage = (data) => {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.log('WebSocket is not open. Cannot send clientMessage.');
+        return;
+    }
+
+    const clientMessageData = {
+        type: 'clientMessage', // Add a type field to distinguish messages
+        ...data
+    };
+
+    console.log('Sending clientMessage:', clientMessageData);
+    socket.send(JSON.stringify(clientMessageData));
+};
+
+// Export the default socket instance and functions
+export default { startSocket, handleSessionUser, closeSocket, clientMessage };

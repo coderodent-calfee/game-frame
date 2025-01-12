@@ -3,6 +3,15 @@
 const PORT = environment['SERVER_PORT'] || 3035;
 const URL = environment['SERVER_URL'] || '192.168.0.249';
 
+class MakeRequestError extends Error {
+    public readonly response: any;
+    constructor(message, response) {
+        super(message);
+        this.name = 'MakeRequestError';
+        this.response = response;
+    }
+}
+
 
 async function makeRequest<T>(url: string, requestOptions: object): Promise<T> {
     console.log("url:", url)
@@ -11,26 +20,13 @@ async function makeRequest<T>(url: string, requestOptions: object): Promise<T> {
         .then((response) => {
             // todo: check for status code 
            if (!response.ok) {
-                throw new Error(`Error: ${response.status} - ${response.statusText}`);
+               const error = new MakeRequestError(`${response.status} - ${response.statusText}`, response); 
+               throw error;
            }
            return response.json();
         });
 }
 
-export async function makeGetRequest<T>(path : string, params: URLSearchParams = new URLSearchParams() ) : Promise<T>{
-    const requestOptions = {
-        method: 'GET',
-    };
-    const url = `http://${URL}:${PORT}/${path}${( params.size > 0)?`?${params.toString()}`:''}`;
-    return makeRequest<T>(url, requestOptions);
-}
-
-interface PostRequestOptions {
-    path: string;                 
-    jwtToken?: string;            
-    body?: object | string;        
-    params?: URLSearchParams | object; 
-}
 
 function objectToRecord(obj: object): Record<string, string> {
     const record: Record<string, string> = {};
@@ -41,13 +37,55 @@ function objectToRecord(obj: object): Record<string, string> {
 
     return record;
 }
+interface GetRequestOptions {
+    path: string;
+    token?: string;
+    params?: URLSearchParams | object;
+}
 
-export async function makePostRequest<T>({
-                                             path,
-                                             token,
-                                             body = {},
-                                             params = new URLSearchParams(),
-                                         }: PostRequestOptions): Promise<T>{
+export async function makeGetRequest<T>(
+    {
+        path,
+        token,
+        params = new URLSearchParams(),
+    }: GetRequestOptions): Promise<T>
+{
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    const searchParams =
+        params instanceof URLSearchParams
+            ? params
+            : new URLSearchParams(objectToRecord(params));
+
+    const url = `http://${URL}:${PORT}/${path}${( searchParams.size > 0)?`?${searchParams.toString()}`:''}`;
+
+    const requestOptions = {
+        method: 'GET',
+        headers,
+    };
+    return makeRequest<T>(url, requestOptions);
+
+}
+
+interface PostRequestOptions {
+    path: string;                 
+    token?: string;            
+    body?: object | string;        
+    params?: URLSearchParams | object; 
+}
+
+export async function makePostRequest<T>(
+    {
+        path,
+        token,
+        body = {},
+        params = new URLSearchParams(),
+    }: PostRequestOptions): Promise<T>
+{
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     };
