@@ -49,6 +49,25 @@ export const handleSessionUser = (sessionId: string, userInfo: any) => {
     socket.send(JSON.stringify(sessionUserData));
 };
 
+// Handle sending session player data
+export const handleSessionPlayer = (sessionId: string, playerId: string) => {
+    console.log('*** handleSessionPlayer sending sessionId, playerId');
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.warn('WebSocket is not open. Cannot send data.');
+        return;
+    }
+
+    const sessionPlayerData = {
+        type: 'sessionPlayer', // Add a type field to distinguish messages
+        sessionId,
+        playerId,
+    };
+
+    console.log('*** Sending session player data:', sessionPlayerData);
+    socket.send(JSON.stringify(sessionPlayerData));
+};
+
+
 // Close the WebSocket connection
 export const closeSocket = () => {
     if (socket) {
@@ -73,4 +92,4 @@ export const clientMessage = (data) => {
 };
 
 // Export the default socket instance and functions
-export default { startSocket, handleSessionUser, closeSocket, clientMessage };
+export default { startSocket, handleSessionUser, handleSessionPlayer, closeSocket, clientMessage };

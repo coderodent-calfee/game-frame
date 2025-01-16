@@ -1,14 +1,13 @@
 ﻿import React, {useEffect, useState} from 'react';
-import {Dimensions, Image, StyleSheet, Text, TextInput, View} from "react-native";
-import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
+import {StyleSheet, Text, View} from "react-native";
+import {Link, useLocalSearchParams, useRouter} from 'expo-router';
 
 import FrameButton from "@/app/components/FrameButton";
 import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
-import {Link} from "expo-router";
 import {Player, useAppContext} from "@/utils/AppContext";
 import Logo from "@/app/components/Logo";
-import {makeGetRequest, makePostRequest} from "@/utils/requester";
+import {makeGetRequest, makePostRequest, MakeRequestError} from "@/utils/requester";
 import socket from "@/utils/socket";
 import PlayerDisplay, {PlayerDisplayProps} from "@/app/components/PlayerDisplay";
 import UserNameComponent from "@/app/components/UserNameComponent";
@@ -45,10 +44,11 @@ export default function Game() {
         getStoredJSON,
         currentGameId, setCurrentGameId,
     } = useAppContext();
-    const [gamePlayerState, setGamePlayerState] = useState<string>("Looking for Player");
+    const [gamePlayerState, setGamePlayerState] = useState<string>("Landed");
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
     const [editUser, setEditUser] = useState<boolean>(true);
+    const router = useRouter();
 
     const toggleEditUser = () => {
         setEditUser((prevState) => !prevState);
@@ -59,22 +59,25 @@ export default function Game() {
         socket.clientMessage({message});
     };
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
-    console.log(`according to useLocalSearchParams in gameId: ${gameId}`);
+    // console.log(`according to useLocalSearchParams in gameId: ${gameId}`);
 
     useEffect(() => {
-        console.log(`useEffect [gameId]:`, gameId);
+        // console.log(`useEffect [gameId]: setCurrentGameId(gameId)`, gameId);
+        if (!gameId || gameId.length !== 6) {
+            return;
+        }
         setCurrentGameId(gameId);
-    }, [gameId, token]);
+    }, [gameId]);
     
     useEffect(() => {
-        console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
+        // console.log(`useEffect editUser:${editUser} userInfo:`, userInfo);
         if (userInfo.name) {
             setEditUser(false);
         }
     }, [userInfo]);
 
     const handleUserName = (info)=>{
-        console.warn("handleUserName ", info);
+        // console.warn("handleUserName ", info);
         if(!player){
             return;
         }
@@ -104,44 +107,102 @@ export default function Game() {
     const isEmpty = (obj: object): boolean => {
         return Object.keys(obj).length === 0;
     };
-
+    
+    const getGameInfo = async () => {
+        makeGetRequest<GameInfoType>({
+            path : `api/game/${gameId}/info/`,
+            token,
+            params : {
+                sessionId: sessionId
+            }
+        })
+        .then((response) => {
+            console.log("getGameInfo response:", response);
+        });
+    };
     
     useEffect(()=>{
-        console.log(`useEffect: [token, sessionId] to get game info and player id`);
-        if(gameId && token && sessionId){
+        // in point of fact; we should just ask the server what our playerId is
+        if(gameId && token && sessionId && gamePlayerState == "Landed" && userInfo.userId){
+            console.log(`useEffect: [gameId, token, sessionId, gamePlayerState, userInfo]`);
+            // first we ensure the game is legit
+            setGamePlayerState("looking for game");
             makeGetRequest<GameInfoType>({
-                path : `api/game/${gameId}/info`,
+                path : `api/game/${gameId}/info/`,
                 token,
                 params : {
                     sessionId: sessionId
                 }
             })
-                .then((response) => {
-                    if(!response.game){
-                        console.log("no game?!:");
-                        // why is it not error status?
-                        // todo: navigate away from here: no game exists
-                    }
-                    console.log("GameInfo response:", response);
-                    setGame(response.game);
-
-                    if(response.player){
-                        console.log("my player(s):", response.player);
-                        if(response.player.length == 1){
-                            setPlayer(response.player[0]);
-                        }
-                    }
-                    else {
-                        console.log("no response.player:", game);
-                    }
-                }).catch((error) => {
-                    console.log("GameInfo failed:", error);
+            .then((response) => {
+                setGamePlayerState("claim player");
+                if (!response.game) {
+                    console.log("no game?!:");
+                    // why is it not error status?
+                    throw new MakeRequestError(`No Game with Id ${gameId}`, response);
                 }
-            );
+                console.log("GameInfo response:", response);
+                setGame(response.game);
+                // next, claim player: 
+                // session ID is more accurate: there will only be one playerId with this sessionId
+                // should I send userId as well? no the sessionId can be used to look it up 
+                return makePostRequest<GameInfoType>({
+                    path: `api/game/${gameId}/claim/`,
+                    token,
+                    params: {
+                        sessionId: sessionId
+                    }
+                })
+                .then((response) => {
+                    setGamePlayerState("player claimed");
+                    console.log("player claim made :", response);
+                    console.log("my player(s):", response.player);
+                    // the server will connect the player to the sessionID
+                    // but we must ensure the socket->session is also valid
+                    const playerInfo = response['player'];
+                    if (playerInfo) {
+                        socket.handleSessionPlayer(sessionId, playerInfo["playerId"]);
+                        setPlayer(playerInfo);
+                        setGamePlayerState("claimed player ");
+                    }else {
+                        console.log("add player no player:");
+                    }
+                })                    
+                .catch((error) => {
+                    // 404 means no unclaimed players
+                    console.log("claim player failed:", error);
+                    // ok, nothing to claim, so add a new player
+                    setGamePlayerState("adding player ");
+                    return makePostRequest<GameInfoType>({
+                        path: `api/game/${gameId}/add/`,
+                        token,
+                        body: {
+                            userId: userInfo.userId
+                        }
+                    }).then((response) => {
+                        console.log("add player response:", response);
+                        const playerInfo = response['player'];
+                        if (playerInfo) {
+                            socket.handleSessionPlayer(sessionId, playerInfo["playerId"]);
+                            setPlayer(playerInfo);
+                            setGamePlayerState("added player ");
+                        }else {
+                            console.log("add player no player:");
+                        }
+                    }).catch((error) => {
+                        console.log("add player failed:", error);
+                    });;
+                });
+            })
+            .catch((error) => {
+                console.log("GameInfo failed:", error);
+                // todo: under what circumstances do I go all the way back to login
+                // router.navigate(`game/`, { key: "LookForGame" }); // key still needed?
+                setGamePlayerState("failed ");
+            });
         }
-        // in point of fact; we should just ask the server what our playerId is
 
-    }, [gameId, token, sessionId]);
+    }, [gameId, token, sessionId, gamePlayerState, userInfo]);
 
     
     const  playerDisplayProps :PlayerDisplayProps = {
@@ -149,13 +210,25 @@ export default function Game() {
         player,
         onPress :()=>{},
     };
-    
+    let playerIndex = -1;
+    if (game && player){
+        playerIndex =game['players'].findIndex((p)=> {
+            console.log(p.playerId);
+            console.log(player['playerId']);
+            console.log(p.playerId===player['playerId']);
+            return p.playerId === player['playerId'];
+        });
+    }
     return (
         <PageLayout
             cornerSize={screenSize.corner}
             topLeftCorner={
             <View>
-                {player && <PlayerDisplay player={player} onPress={toggleEditUser} size={screenSize.corner} playerNumber={1}/>}
+                {game && player && <PlayerDisplay 
+                    player={player} 
+                    onPress={toggleEditUser} 
+                    size={screenSize.corner} 
+                    playerNumber={1 + playerIndex}/>}
                 {!player && <Logo id="top-left-corner-icon"/>}
             </View>
 
@@ -193,9 +266,14 @@ export default function Game() {
             }
             bottomContent={
                 <View style={appStyles.columnFlow}>
-                    <FrameButton title="Send" onPress={()=>sendMessage("random message")}></FrameButton>
+                    <View style={appStyles.rowFlow}>
+                        <FrameButton title="Send" onPress={()=>sendMessage("random message")}></FrameButton>
+                        <FrameButton title="Game Info" onPress={()=>getGameInfo()}></FrameButton>
+                    </View>
+                    
                     {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}
                     {userInfo.userId && <Text style={[appStyles.smallText]}>userId: {userInfo.userId}</Text>}
+                    {sessionId && <Text style={[appStyles.smallText]}>sessionId: {sessionId}</Text>}
                     {token && <Text style={[appStyles.smallText]}>JSON Web Token Present</Text>}
                 </View>}
         />

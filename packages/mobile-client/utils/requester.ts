@@ -3,7 +3,7 @@
 const PORT = environment['SERVER_PORT'] || 3035;
 const URL = environment['SERVER_URL'] || '192.168.0.249';
 
-class MakeRequestError extends Error {
+export class MakeRequestError extends Error {
     public readonly response: any;
     constructor(message, response) {
         super(message);
@@ -14,12 +14,15 @@ class MakeRequestError extends Error {
 
 
 async function makeRequest<T>(url: string, requestOptions: object): Promise<T> {
-    console.log("url:", url)
-    console.log("requestOptions:", requestOptions)
+    // console.log("url:", url)
+    // console.log("requestOptions:", requestOptions)
     return fetch(url, requestOptions)
         .then((response) => {
             // todo: check for status code 
            if (!response.ok) {
+               if(response.status !== 404){
+                   console.warn('MakeRequestError: ', response);
+               }
                const error = new MakeRequestError(`${response.status} - ${response.statusText}`, response); 
                throw error;
            }

@@ -17,14 +17,9 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const { screenSize, appStyles } = useAppContext();
 
-    console.log(`render input ${input}`);
-
-
     useEffect(() => {
 
         const possibleGameId = display.join("");
-
-        console.log(`useEffect possibleGameId ${possibleGameId} len ${possibleGameId.length}`);
         if(setGameId && possibleGameId && possibleGameId.length ){
             setGameId(possibleGameId);
         }
@@ -43,7 +38,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
         if (false === /[A-Z0-9]/.test(lastChar.toUpperCase())) {
             return;
         }
-        console.log(`handleInput ${input} at ${index} <= ${lastChar}`);
+        // console.log(`handleInput ${input} at ${index} <= ${lastChar}`);
         const newInput = [...input];
         newInput[index] = lastChar.toUpperCase();
         setInput(newInput);
@@ -55,7 +50,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
             // If debounce is already in flight, do nothing
             return;
         }
-        console.log(`handleDebouncedUpdate input ${input} newInput ${newInput} index ${index}`);
+        // console.log(`handleDebouncedUpdate input ${input} newInput ${newInput} index ${index}`);
         const move = () => {        // Move to the next input if this one is filled
             if (index < 5) {
                 const nextInput = document.getElementById(`input-${index + 1}`);
@@ -67,7 +62,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
         // Set the debounce timer
         debounceTimer.current = setTimeout(() => {
             debounceTimer.current = null; // Reset debounce
-            console.log(`timeout display ${display} input ${input}`);
+            // console.log(`timeout display ${display} input ${input}`);
             setDisplay(newInput);
             move();
         }, 150); // Adjust delay as needed
@@ -84,7 +79,7 @@ const GameId: React.FC<GameIdProps> = ({ gameId, setGameId }) => {
     // on the web this is called first
     const handleKeyPress = (e: any, index: number) => {
         const key = e.nativeEvent.key;
-        console.warn(`handleKeyPress ${e.nativeEvent.key} at ${index}`);
+        // console.warn(`handleKeyPress ${e.nativeEvent.key} at ${index}`);
         const inputElement = document.getElementById(`input-${index}`);
         inputElement.value = "";
         if(key.len !== 1){

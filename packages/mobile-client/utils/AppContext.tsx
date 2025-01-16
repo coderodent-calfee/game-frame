@@ -7,16 +7,16 @@ import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEm
 
 // Define the shape of the context state
 interface AppContextType {
-    sessionId: string | null;
-    setSessionId: (id: string | null) => void;
-    userInfo: any;
-    setUserInfo: (info: any) => void;
-    getStoredString: (key: string) => Promise<string | null>;
-    setStoredString: (key: string, value: string) => Promise<void>;
     getStoredJSON: (key: string) => Promise<object | null>;
-    setStoredJSON: (key: string, value: object) => Promise<void>;
+    getStoredString: (key: string) => Promise<string | null>;
     removeStoredItem: (key: string) => Promise<void>;
     screenSize: { width: number, height: number, corner:number };
+    sessionId: string | null;
+    setSessionId: (id: string | null) => void;
+    setStoredJSON: (key: string, value: object) => Promise<void>;
+    setStoredString: (key: string, value: string) => Promise<void>;
+    setUserInfo: (info: any) => void;
+    userInfo: any;
     appStyles: {
         mediumText: { color: string, fontSize: number },
         rowFlow: { flex: number, flexDirection: "row" },
@@ -73,12 +73,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const getStoredJSON = async (key: string): Promise<object | null> => {
-        console.log('getStoredJSON', key);
+        // console.log('getStoredJSON', key);
         return getStoredString(key).then(info => info && JSON.parse(info));
     };
 
     const setStoredJSON = async (key: string, value: object): Promise<void> => {
-        console.log(`setStoredJSON ${key}`, value);
+        // console.log(`setStoredJSON ${key}`, value);
         return setStoredString(key, JSON.stringify(value))
     };
 
@@ -155,57 +155,60 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("api/accounts/token/refresh/ failed:", error)
             console.log("api/accounts/token/refresh/ response:", error.response)
         });
+    };
 
-    };    
-    
+    const handleResize = () => {
+        const handleResize = () => {
+            setScreenSize(figureScreenSize());
+        };
+
+//        Dimensions.addEventListener('change', handleResize);
+        setDimensionsSubscription(Dimensions.addEventListener('change', handleResize))
+
+        return () => {
+//            Dimensions.removeEventListener('change', handleResize);
+            dimensionsSubscription?.remove();
+            setDimensionsSubscription(None)
+        };
+    };
+
 // Send session user data when sessionId or userInfo changes
 //     useEffect(() => {
 //         if (sessionId) {
 //             socket.handleSessionUser(sessionId, userInfo);
 //         }
 //     }, [sessionId, userInfo]);
-    
-    useEffect(() => {
-        const handleResize = () => {
-            setScreenSize(figureScreenSize());
-        };
-        
-//        Dimensions.addEventListener('change', handleResize);
-        setDimensionsSubscription(Dimensions.addEventListener('change', handleResize))
-        
-        return () => {
-//            Dimensions.removeEventListener('change', handleResize);
-            dimensionsSubscription?.remove();
-            setDimensionsSubscription(None)
-        };
-    }, []);
-
-
-    useEffect(() => {
+    const loadStoredDataOnMount = () => {
         // Load stored data on mount
         const loadUserInfo = async () => {
-            console.log("AppContext useEffect[] load('userInfo')")
+            // console.log("AppContext useEffect[] load('userInfo')")
             const storedUserInfo = await getStoredJSON('userInfo');
             if (storedUserInfo) {
-                console.log(`Loaded stored user info:`, storedUserInfo);
+                // console.log(`Loaded stored user info:`, storedUserInfo);
                 setUserInfo(storedUserInfo);
             }
         };
         const loadSeen = async () => {
-            console.log("AppContext useEffect[] loadSeen")
+            // console.log("AppContext useEffect[] loadSeen")
             const storedSeen = await getStoredJSON('seen');
             if (storedSeen) {
-                console.log(`Loaded stored seen:`, storedSeen);
+                // console.log(`Loaded stored seen:`, storedSeen);
                 setJwtRefresh(storedSeen);
             }
         };
-
         loadSeen();
-        loadUserInfo(); 
+        loadUserInfo();
+    };
+
+    // This runs only once, after the component is mounted
+    useEffect(() => {
+        handleResize();
+        loadStoredDataOnMount();
     }, []);
 
+
     useEffect(() => {
-        console.log("AppContext useEffect[userInfo] setStoredJSON('userInfo')", userInfo)
+        // console.log("AppContext useEffect[userInfo] setStoredJSON('userInfo')", userInfo)
         const saveData = async () => {
             await setStoredJSON('userInfo', userInfo);
         };
@@ -215,7 +218,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }, [userInfo]);
 
     useEffect(() => {
-        console.log("AppContext useEffect[jwtRefresh] setStoredJSON('seen')", jwtRefresh)
+        // console.log("AppContext useEffect[jwtRefresh] setStoredJSON('seen')", jwtRefresh)
         const saveData = async () => {
             await setStoredJSON('seen', jwtRefresh);
         };
@@ -240,7 +243,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     useEffect(() => {
-        console.log(`appcontext useEffect [seen, sessionId]: ${jwtRefresh}/${sessionId}`);
+        // console.log(`appcontext useEffect [seen, sessionId]: ${jwtRefresh}/${sessionId}`);
         if(currentGameId && sessionId){
             if(jwtRefresh) {
                 makePostRequest<AuthenticatedSessionId>({
@@ -251,12 +254,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                     }
                 })
                     .then((response) => {
-                        console.log("AuthenticatedSessionId response:", response);
+                        // console.log("AuthenticatedSessionId response:", response);
                         socket.handleSessionUser(sessionId, userInfo);
                     })
-                    .catch((error) => {3
-                        console.log("AuthenticatedSessionId failed:", error);
-                        console.log("AuthenticatedSessionId status code:", error.response.status);
+                    .catch((error) => {
+                        // console.log("AuthenticatedSessionId failed:", error);
+                        // console.log("AuthenticatedSessionId status code:", error.response?.status);
                         // if the response indicates that our token is expired, we can try to refresh it
                         handleRefresh();
                     });
@@ -269,7 +272,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     useEffect(() => {
-        console.log("AppContext useEffect[currentGameId] startSocket(currentGameId)")
+        console.log(`AppContext useEffect[currentGameId] startSocket(${currentGameId})`)
         
         if(currentGameId){
             socket.startSocket(currentGameId);

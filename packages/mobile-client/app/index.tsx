@@ -133,7 +133,7 @@ export default function Index() {
             return;
         }
         makePostRequest<GameType>({
-                path: 'api/game/newGame/', 
+                path: 'api/game/new/', 
                 token,
                 params : {
                     userId : userInfo.userId
@@ -142,19 +142,7 @@ export default function Index() {
             .then((response) => {
                 console.log("newGame created:", response);
                 const gameId = response['game'].gameId;
-                return makePostRequest<UserType>({
-                    path : `api/game/${gameId}/join/`, 
-                    token,
-                    params : {
-                        userId: userInfo.userId
-                    }
-                });
-            })
-            .then((response) => {
-                console.log("joinGame response:", response);
-                const gameId = response['game'].gameId;
-                const playerInfo = response['player'];
-                router.navigate(`game/${gameId}/`, { key: "JoinGame" }); // key still needed?
+                router.navigate(`game/${gameId}/`, { key: "NewGame" }); // key still needed?
             }).catch((error) => {
                 console.log("newGame failed:", error)
             });

@@ -54,38 +54,25 @@ export default function Index() {
         if (!gameId || gameId.length !== 6) {
             return;
         }
-        makeGetRequest<GameInfoType>(`api/game/${gameId}/info/`, new URLSearchParams())
-          .then((response) => {
-            // the logic here is sound: response.game is now response.id
-            // because the json is now a game
-              // todo: fix-a-doo
-                if(!response.game){
-                    return;
-                }
-                setGame(response.game);
-            }).catch((error) => {
-                console.log("GameInfo failed:", error);
+        makeGetRequest<GameInfoType>({ 
+            path : `api/game/${gameId}/info/` 
+        })
+        .then((response) => {
+            if(!response.game){
+                return;
             }
-        );
+            setGame(response.game);
+        }).catch((error) => {
+            console.log("GameInfo failed:", error);
+        });
     }, [gameId]);
     
     useEffect(() => {
         console.log(`useEffect game` , game);
-        if(!game || !gameId || gameId.length !== 6){
+        if(!game || !gameId || gameId.length !== 6 || game.gameId !== gameId){
             return;
         }
-        makePostRequest<GameInfoType>({
-                path: `api/game/${gameId}/join/`, 
-                token, 
-                params: {userId : userInfo.userId}
-            })
-            .then((response) => {
-                console.log("joinGame response:", response);
-                router.navigate(`game/${gameId}/`, {key:"JoinGame"}); // key still needed?
-            }).catch((error) => {
-                console.log("joinGame failed:", error)
-            }
-        );
+        router.navigate(`game/${gameId}/`, {key:"JoinGame"}); // key still needed?
     }, [game]);
     
     
