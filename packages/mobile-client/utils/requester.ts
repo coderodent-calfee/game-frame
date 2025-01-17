@@ -1,4 +1,4 @@
-﻿import { environment } from '@/utils/environment';
+﻿import {environment} from '@/utils/environment';
 
 const PORT = environment['SERVER_PORT'] || 3035;
 const URL = environment['SERVER_URL'] || '192.168.0.249';
@@ -14,8 +14,6 @@ export class MakeRequestError extends Error {
 
 
 async function makeRequest<T>(url: string, requestOptions: object): Promise<T> {
-    // console.log("url:", url)
-    // console.log("requestOptions:", requestOptions)
     return fetch(url, requestOptions)
         .then((response) => {
             // todo: check for status code 
@@ -23,10 +21,13 @@ async function makeRequest<T>(url: string, requestOptions: object): Promise<T> {
                if(response.status !== 404){
                    console.warn('MakeRequestError: ', response);
                }
-               const error = new MakeRequestError(`${response.status} - ${response.statusText}`, response); 
-               throw error;
+               throw new MakeRequestError(`${response.status} - ${response.statusText}`, response);
            }
            return response.json();
+        }).catch((error)=>{
+            console.log("url:", url)
+            console.log("requestOptions:", requestOptions)
+            throw error;
         });
 }
 
@@ -40,7 +41,7 @@ function objectToRecord(obj: object): Record<string, string> {
 
     return record;
 }
-interface GetRequestOptions {
+export interface GetRequestOptions {
     path: string;
     token?: string;
     params?: URLSearchParams | object;

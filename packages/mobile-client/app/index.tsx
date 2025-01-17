@@ -28,7 +28,7 @@ interface JwtUserId {
 
 
 export default function Index() {
-    const {signIn, signOut, token, appStyles, sessionId, userInfo, setUserInfo, getStoredJSON, setStoredJSON, addPlayerToGame, screenSize } = useAppContext();
+    const {signIn, signOut, token, appStyles, userInfo, setUserInfo, screenSize } = useAppContext();
 
     const router = useRouter();
 
@@ -160,16 +160,10 @@ export default function Index() {
                         <FrameButton title="Look For Game" onPress={() => {
                         }}></FrameButton>
                     </Link>
-
                     <FrameButton title="New Game" onPress={newGame}></FrameButton>
-
-
                 </View>
-
             }
             topRightCorner={<Text style={appStyles.mediumText}>width: {screenSize.width} height: {screenSize.height}</Text>}
-
-
             leftSideContent={
                 <View style={appStyles.columnFlow}>
                     {token && <FrameButton title="Log Out" onPress={handleLogout}></FrameButton>}

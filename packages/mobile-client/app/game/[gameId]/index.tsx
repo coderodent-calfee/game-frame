@@ -43,11 +43,12 @@ export default function Game() {
         userInfo, 
         getStoredJSON,
         currentGameId, setCurrentGameId,
+        contextGetRequest,
     } = useAppContext();
     const [gamePlayerState, setGamePlayerState] = useState<string>("Landed");
     const [game, setGame] = useState<GameType | undefined>();
     const [player, setPlayer] = useState<Player | undefined>();
-    const [editUser, setEditUser] = useState<boolean>(true);
+    const [editUser, setEditUser] = useState<boolean>(false);
     const router = useRouter();
 
     const toggleEditUser = () => {
@@ -109,7 +110,7 @@ export default function Game() {
     };
     
     const getGameInfo = async () => {
-        makeGetRequest<GameInfoType>({
+        contextGetRequest<GameInfoType>({
             path : `api/game/${gameId}/info/`,
             token,
             params : {
@@ -213,9 +214,6 @@ export default function Game() {
     let playerIndex = -1;
     if (game && player){
         playerIndex =game['players'].findIndex((p)=> {
-            console.log(p.playerId);
-            console.log(player['playerId']);
-            console.log(p.playerId===player['playerId']);
             return p.playerId === player['playerId'];
         });
     }

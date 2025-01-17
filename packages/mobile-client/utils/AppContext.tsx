@@ -2,7 +2,7 @@
 import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import socket from "@/utils/socket";
-import {makePostRequest} from "@/utils/requester";
+import {GetRequestOptions, makeGetRequest, makePostRequest} from "@/utils/requester";
 import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEmitter";
 
 // Define the shape of the context state
@@ -63,6 +63,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
     const [screenSize, setScreenSize] = useState(figureScreenSize());
     const [appStyles, setAppStyles] = useState({...styles});
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [refreshQueue, setRefreshQueue] = useState([]);
+
+
 
     const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
 
@@ -106,16 +110,67 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    function addPlayerToGame(gameId: string, playerData: Player, gamePlayerMap: GamePlayerMap): object {
-        const playerId: string = playerData.playerId;
-        if (!gamePlayerMap[gameId]) {
-            gamePlayerMap[gameId] = {};
+    async function refreshAuthToken(): Promise<string> {
+        console.log("refreshAuthToken ");
+
+        if (isRefreshing) {
+            // Wait for the refresh to complete and get the new token
+            return new Promise((resolve) => {
+                setRefreshQueue((prevState)=>[...prevState, resolve]);
+            });
         }
-        gamePlayerMap[gameId][playerId] = playerData;
-        return gamePlayerMap;
+
+        setIsRefreshing(true);
+
+        try {
+            await makePostRequest<JwtUserId>({
+                path : 'api/accounts/token/refresh/',
+                body : {
+                    "grant_type" : "refresh_token",
+                    "refresh" : jwtRefresh,
+                }
+            })
+            .then((response) => {
+                console.log("api/accounts/token/refresh/:", response);
+                signIn(response);
+                refreshQueue.forEach((resolve) => resolve(response.access));
+                setRefreshQueue([]);
+                return response.access;
+            }).catch((error) => {
+                console.log("api/accounts/token/refresh/ failed:", error)
+                console.log("api/accounts/token/refresh/ response:", error.response)
+                throw error;
+            });
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            throw error;
+        } finally {
+            setIsRefreshing(false);
+        }
+    }
+    
+    const contextGetRequest = async (args: GetRequestOptions): Promise<T> => {
+        return makeGetRequest<T>(args).catch((error)=>{
+            const code = error.response?.status;
+            if(code === 401 && jwtRefresh){
+                const newToken = refreshAuthToken();
+                const newArgs : GetRequestOptions = args;
+                newArgs['token'] = newToken;
+                return makeGetRequest<T>(newArgs);
+            }else{
+                throw error;
+            }
+        });
+    };
+    
+
+    interface JwtUserId {
+        access: string;
+        refresh: string;
+        userId?: string;
     }
 
-    const signIn = ({access, refresh, userId}:{access: string, refresh: string, userId: string | undefined} ): boolean => {
+    const signIn = ({access, refresh, userId}:JwtUserId): boolean => {
         console.log('sign in: got token, refresh, and userId:', userId);
         setToken(access);
         setJwtRefresh(refresh);
@@ -130,11 +185,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setToken(undefined);
     };
 
-    interface JwtUserId {
-        access: string;
-        refresh: string;
-        userId?: string;
-    }
 
 
     const handleRefresh = async () => {
@@ -288,8 +338,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <AppContext.Provider
             value={{
-                addPlayerToGame,
                 appStyles,
+                contextGetRequest,
                 currentGameId, setCurrentGameId,
                 getStoredJSON, setStoredJSON,
                 getStoredString, setStoredString,
