@@ -1,4 +1,5 @@
 ﻿import { environment } from "@/utils/environment";
+import { EventEmitter } from 'eventemitter3';
 
 const PORT = environment['SOCKET_PORT'] || 8000; // Use your Django ASGI server's port
 const URL = environment['SERVER_URL'] || '192.168.0.249';
@@ -6,6 +7,8 @@ const SOCKET_URL = `ws://${URL}:${PORT}/ws/game/`; // Update with your WebSocket
 
 // Create a WebSocket instance
 let socket: WebSocket | null = null;
+
+export const socketEvents = new EventEmitter();
 
 // Start and manage the WebSocket connection
 export const startSocket = (gameId) => {
@@ -18,7 +21,8 @@ export const startSocket = (gameId) => {
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('Message from server:', data);
+            console.log('Message from server:', data);// keep as string?
+            socketEvents.emit('message', data);
         };
 
         socket.onerror = (error) => {
@@ -90,6 +94,3 @@ export const clientMessage = (data) => {
     console.log('Sending clientMessage:', clientMessageData);
     socket.send(JSON.stringify(clientMessageData));
 };
-
-// Export the default socket instance and functions
-export default { startSocket, handleSessionUser, handleSessionPlayer, closeSocket, clientMessage };

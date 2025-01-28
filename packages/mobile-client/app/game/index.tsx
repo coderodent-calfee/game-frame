@@ -7,30 +7,10 @@ import PageLayout from "@/app/components/PageLayout";
 import {Link, Redirect, useRouter} from "expo-router";
 import Logo from "@/app/components/Logo";
 import {makeGetRequest, makePostRequest} from "@/utils/requester";
-import {useAppContext} from "@/utils/AppContext";
+import {GameInfoType, GameType, useAppContext} from "@/utils/AppContext";
 import UserNameComponent from "@/app/components/UserNameComponent";
 
 
-// todo: put these in one place
-interface Player {
-    playerId: string;
-    name: string;
-    gameId: string;
-}
-
-interface GameType {
-    gameId: string;
-    players: Player[];
-    status: string;
-    minPlayers: number;
-    maxPlayers: number;
-}
-
-interface GameInfoType {
-    message?: string;
-    game: GameType;
-    player?: Player;
-}
 
 // Looking for a Game by putting in a GameId
 export default function Index() {

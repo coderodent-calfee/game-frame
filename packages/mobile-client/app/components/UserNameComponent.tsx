@@ -19,6 +19,7 @@ const UserNameComponent = ({ user, setUserName, placeholder, secure }: UserNameC
     const userNameComponentStyles = screenSize.width < 500 ? smallStyles : screenSize.width < 1500 ? styles : largeStyles;
 
     const [nameInput, setNameInput] = useState<string>(user.name || '');
+    const [sentInput, setSentInput] = useState<string>(user.name || '');
     useEffect(() => {
         setNameInput(user.name || ''); // Sync the input with user.name if available
     }, [user.name]);
@@ -28,7 +29,10 @@ const UserNameComponent = ({ user, setUserName, placeholder, secure }: UserNameC
     };
 
     const handleNameSubmit = () => {
-        setUserName({ name: nameInput });
+        if(nameInput != sentInput){
+            setUserName({ name: nameInput });
+            setSentInput(nameInput);
+        }
     };
     return (
         <View>

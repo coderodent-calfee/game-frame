@@ -5,12 +5,17 @@ import FrameButton from "@/app/components/FrameButton";
 import PageLayout from "@/app/components/PageLayout";
 import {Player, useAppContext} from "@/utils/AppContext";
 import UserNameComponent from "@/app/components/UserNameComponent";
-import {socket, startSocket, handleSessionUser} from '@/utils/socket';
 import {makePostRequest} from '@/utils/requester'
-import {useNavigation} from "@react-navigation/native";
 
 import {Link, useRouter} from "expo-router";
 import Logo from "@/app/components/Logo";
+
+import AceOfSpades from "../assets/images/cards/AS.svg";
+
+// ***
+// *** Interfaces
+// ***
+
 
 interface GameType {
     gameId: string;
@@ -27,21 +32,24 @@ interface JwtUserId {
 }
 
 
+// ***
+// *** Utilities
+// ***
+
 export default function Index() {
     const {signIn, signOut, token, appStyles, userInfo, setUserInfo, screenSize } = useAppContext();
 
     const router = useRouter();
 
+
+// ***
+// *** Handlers
+// ***
+
     const resetUser = () => {
         console.log(`reset User:`);
         setUserInfo({});
     };
-
-    const generateId = (): string => {
-        const array = new Uint8Array(16);
-        crypto.getRandomValues(array);
-        return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
-    }
 
     const handleUserName = (info) => {
         if (!info || !info.name || !info.name.length) {
@@ -64,9 +72,7 @@ export default function Index() {
         setUserInfo((prevState) => { return { ...prevState, email: info.name }; });
     };
 
-    const handleLogin = (info) => {
-        console.log("handleLogin ", info);
-
+    const handleLogin = (_) => {
         const { username, password } = userInfo;
         if (!(username && password)) {
             return;
@@ -80,11 +86,7 @@ export default function Index() {
                 }
             })
             .then((response) => {
-                console.log("api/accounts/token/:", response);
                 signIn(response);
-
-                // TODO: next get the user info to store in local and the react state
-
             }).catch((error) => {
             console.log("api/accounts/token/ failed:", error)
         });
@@ -92,7 +94,7 @@ export default function Index() {
     };
 
     const handleLogout = (info) => {
-        console.log("handleLoout ", info);
+        console.log("handleLogout ", info);
         signOut();
         
     };
@@ -148,7 +150,6 @@ export default function Index() {
             });
     }
 
-
     return (
         <PageLayout
             cornerSize={screenSize.corner}
@@ -163,7 +164,12 @@ export default function Index() {
                     <FrameButton title="New Game" onPress={newGame}></FrameButton>
                 </View>
             }
-            topRightCorner={<Text style={appStyles.mediumText}>width: {screenSize.width} height: {screenSize.height}</Text>}
+            topRightCorner={
+                <View style={appStyles.columnFlow}>
+                    <AceOfSpades height="100%" width="100%" />
+                    <Text style={appStyles.smallText}>width: {screenSize.width} height: {screenSize.height}</Text>
+                </View>
+            }
             leftSideContent={
                 <View style={appStyles.columnFlow}>
                     {token && <FrameButton title="Log Out" onPress={handleLogout}></FrameButton>}
@@ -171,19 +177,24 @@ export default function Index() {
             }
             centralContent={
                 <View style={[appStyles.columnFlow]}>
-
-                    {!token && <UserNameComponent user={{ name: userInfo.username }} setUserName={handleUserName} />}
-                    {!token && !userInfo.username && <Text style={[appStyles.smallText]}>User Name is Required</Text>}
-                    {!token && <UserNameComponent secure={true} placeholder={'Enter Password'} user={{ name: userInfo.password }} setUserName={handlePassword} />}
-                    {!token && !userInfo.password && <Text style={[appStyles.smallText]}>Password is Required</Text>}
-                    {!token && <UserNameComponent placeholder={'Enter Email'} user={{ name: userInfo.email }} setUserName={handleEmail} />}
-                    {!token && !userInfo.email && <Text style={[appStyles.smallText]}>Email is Required to Sign Up</Text>}
+                    <form id="a-form">
+                        {!token && <UserNameComponent user={{name: userInfo.username}} setUserName={handleUserName}/>}
+                        {!token && !userInfo.username && <Text style={[appStyles.smallText]}>User Name is Required</Text>}
+                        {!token &&
+                            <UserNameComponent secure={true} placeholder={'Enter Password'} user={{name: userInfo.password}}
+                                               setUserName={handlePassword}/>}
+                        {!token && !userInfo.password && <Text style={[appStyles.smallText]}>Password is Required</Text>}
+                        {!token && <UserNameComponent placeholder={'Enter Email'} user={{name: userInfo.email}}
+                                                      setUserName={handleEmail}/>}
+                        {!token && !userInfo.email &&
+                            <Text style={[appStyles.smallText]}>Email is Required to Sign Up</Text>}
+                    </form>
 
                 </View>
             }
             bottomContent={
                 <View style={appStyles.columnFlow}>
-                    <View style={[appStyles.rowFlow, { flex: "initial", justifyContent: "space-between" }]}>
+                <View style={[appStyles.rowFlow, { flex: "initial", justifyContent: "space-between" }]}>
                         {!token && userInfo.email && <FrameButton title="Sign Up" onPress={handleSignUp}></FrameButton>}
                         {!token && <FrameButton title="Log In" onPress={handleLogin}></FrameButton>}
                         {!token && <FrameButton title="Clear" onPress={() => { console.log("clear") }}></FrameButton>}

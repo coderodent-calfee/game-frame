@@ -1,11 +1,14 @@
 ﻿import React, { createContext, useContext, useState, useEffect } from 'react';
 import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import socket from "@/utils/socket";
+import {closeSocket, handleSessionUser, startSocket} from "@/utils/socket";
 import {GetRequestOptions, makeGetRequest, makePostRequest} from "@/utils/requester";
 import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEmitter";
 
-// Define the shape of the context state
+
+// ***
+// *** Interfaces
+// ***
 interface AppContextType {
     getStoredJSON: (key: string) => Promise<object | null>;
     getStoredString: (key: string) => Promise<string | null>;
@@ -26,24 +29,62 @@ interface AppContextType {
     };
 }
 
-
-export interface Player {
-    playerId: string;
-    name: string;
-    gameId: string;
-}
-
 interface AuthenticatedSessionId {
     "message": string;
     "received_data": object;
     "sessionId": string;
 }
 
+export interface Player {
+    playerId: string;
+    name: string;
+    gameId: string;
+    userId?: string;
+}
 
-// Create the context
+export interface GameType {
+    gameId: string;
+    players: Player[];
+    status: string;
+}
+
+export interface GameInfoType {
+    message?: string;
+    game: GameType;
+    player?: Player;
+}
+
+// ***
+// *** Utilities
+// ***
+const figureScreenSize = ()=>{
+    const dim = Dimensions.get('window');
+    const minDim = Math.min(dim.height, dim.width);
+    // screens: tv/computer width: 1536 height: 826
+    // mobile portrait: width: 412 height: 733
+
+    const corner = minDim > 800 ? 200 : minDim < 500 ? 90: 100;
+    return({...dim, corner});
+};
+
+const figureFontSize = ()=>{
+    const screenSize = figureScreenSize();
+    const screenWidth = screenSize.width;
+    const fontStyleLarge = screenWidth > 1500 ? styles.largeText : screenWidth < 500 ? styles.smallText : styles.mediumText;
+    const fontStyleMedium = screenWidth > 1500 ? styles.mediumText : screenWidth < 500 ? styles.smallestText : styles.smallText;
+    const fontStyleSmall = screenWidth > 1500 ? styles.smallText : styles.smallestText;
+    return {
+        ...styles,
+        largeText: fontStyleLarge,
+        mediumText: fontStyleMedium,
+        smallText: fontStyleSmall,
+    };
+};
+    
+// ***
+// *** Application Context Provider Component
+// ***
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Create a provider component
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [sessionId, setSessionId] = useState<string>();
     const [token, setToken] = useState<string>();
@@ -52,24 +93,25 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const [jwtRefresh, setJwtRefresh] = useState<string>();
     const [userInfo, setUserInfo] = useState<any>({});
     const [dimensionsSubscription, setDimensionsSubscription] = useState<EmitterSubscription>();
-    const figureScreenSize = ()=>{
-        const dim = Dimensions.get('window');
-        const minDim = Math.min(dim.height, dim.width);
-        // screens: tv/computer width: 1536 height: 826
-        // mobile portrait: width: 412 height: 733
-
-        const corner = minDim > 800 ? 200 : minDim < 500 ? 90: 100;
-        return({...dim, corner});
-    };
     const [screenSize, setScreenSize] = useState(figureScreenSize());
-    const [appStyles, setAppStyles] = useState({...styles});
+    const [appStyles, setAppStyles] = useState({...figureFontSize()});
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [refreshQueue, setRefreshQueue] = useState([]);
 
 
+    useEffect(() => {
+        console.log(`AppContext useEffect[currentGameId] will startSocket to gameId ${currentGameId}`)
 
-    const storage = Platform.OS === 'web' ? localStorage : AsyncStorage;
+        if(currentGameId){
+            startSocket(currentGameId);
+            setSessionId(generateSessionId());
+        }
 
+        return () => {
+            closeSocket(); // Clean up on component unmount
+        };
+    }, [currentGameId]);
+    
     function generateSessionId(): string {
         const array = new Uint8Array(16); // 16 bytes = 128 bits
         crypto.getRandomValues(array); // Fill the array with secure random values
@@ -278,17 +320,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }, [jwtRefresh]);    
     
     useEffect(() => {
-        // screens: tv/computer width: 1536 height: 826
-        // mobile portrait: width: 412 height: 733
-        const screenWidth = screenSize.width;
-        const fontStyleLarge = screenWidth > 1500 ? styles.largeText : screenWidth < 500 ? styles.smallText : styles.mediumText;
-        const fontStyleMedium = screenWidth > 1500 ? styles.mediumText : screenWidth < 500 ? styles.smallestText : styles.smallText;
-        const fontStyleSmall = screenWidth > 1500 ? styles.smallText : styles.smallestText;
-        setAppStyles({...styles,
-            largeText: fontStyleLarge,
-            mediumText: fontStyleMedium,
-            smallText: fontStyleSmall,
-        });
+        console.log("AppContext useEffect[screenSize] setAppStyles")
+        
+        const currentAppStyles = figureFontSize();
+        setAppStyles({...currentAppStyles});
     }, [screenSize]);
 
 
@@ -305,7 +340,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                 })
                     .then((response) => {
                         // console.log("AuthenticatedSessionId response:", response);
-                        socket.handleSessionUser(sessionId, userInfo);
+                        handleSessionUser(sessionId, userInfo);
                     })
                     .catch((error) => {
                         // console.log("AuthenticatedSessionId failed:", error);
@@ -321,18 +356,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }, [ jwtRefresh, sessionId, currentGameId]);
 
 
-    useEffect(() => {
-        console.log(`AppContext useEffect[currentGameId] startSocket(${currentGameId})`)
-        
-        if(currentGameId){
-            socket.startSocket(currentGameId);
-            setSessionId(generateSessionId());
-        }
-
-        return () => {
-            socket.closeSocket(); // Clean up on component unmount
-        };
-    }, [currentGameId]);
 
 
     return (

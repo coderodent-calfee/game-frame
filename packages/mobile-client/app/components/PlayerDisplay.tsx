@@ -12,7 +12,7 @@ export interface PlayerDisplayProps {
 
 const PlayerDisplay  = (props:PlayerDisplayProps) => {
 
-    const { player, onPress, size,playerNumber } = props; // Destructure props for clarity
+    const { player, onPress, size, playerNumber } = props; // Destructure props for clarity
 
     const buttonText = player.name; // Declare variables
     const overlayText = `Player ${playerNumber}`;
