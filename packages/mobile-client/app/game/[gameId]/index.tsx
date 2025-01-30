@@ -54,8 +54,24 @@ export default function Game() {
     
     useEffect(() => {
         const handleSocketMessage = (message) => {
-            console.log("Received message:", message);
+            console.log(`Received message: "${message}"`);
+            const data = JSON.parse(message);
+            console.log("Received data:", data);
             // Act on the message
+            switch(data['type']){
+                case 'name_player':{
+                    getGameInfo().catch((error) => {
+                        console.log("GameInfo failed:", error);
+                    });
+                    break;
+                }
+                case 'add_player':{
+                    getGameInfo().catch((error) => {
+                        console.log("GameInfo failed:", error);
+                    });
+                    break;
+                }
+            }
         };
 
         // Register the listener
@@ -79,8 +95,7 @@ export default function Game() {
             setEditUser(false);
         }
     }, [userInfo]);
-
-
+    
     useEffect(()=>{
         // in point of fact; we should just ask the server what our playerId is
         if(gameId && token && sessionId && gamePlayerState == "Landed" && userInfo.userId){
@@ -283,7 +298,7 @@ export default function Game() {
                 <View style={appStyles.columnFlow}>
                     <View style={appStyles.rowFlow}>
                         <FrameButton title="Send" onPress={()=>sendMessage("random message")}></FrameButton>
-                        <FrameButton title="Game Info" onPress={()=>getGameInfo()}></FrameButton>
+                        <FrameButton title="Game Info" onPress={()=>getGameInfo().catch((error) => console.log("GameInfo failed:", error))}></FrameButton>
                     </View>
                     
                     {player && <Text style={[appStyles.smallText]}>player:{player.playerId}</Text>}

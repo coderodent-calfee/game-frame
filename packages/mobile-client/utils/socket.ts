@@ -20,9 +20,8 @@ export const startSocket = (gameId) => {
         };
 
         socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Message from server:', data);// keep as string?
-            socketEvents.emit('message', data);
+            console.log('Message from server:', event.data);
+            socketEvents.emit('message', event.data);
         };
 
         socket.onerror = (error) => {
