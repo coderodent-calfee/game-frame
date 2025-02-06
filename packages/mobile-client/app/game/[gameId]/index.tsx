@@ -292,7 +292,7 @@ export default function Game() {
                             if(p.name === player?.name){
                                 return;
                             }
-                            return <FrameButton key={index} title={p.name} onPress={()=>{}}></FrameButton>;
+                            return <FrameButton disabled={p.isActive !== true} key={index} title={p.name} onPress={()=>{}}></FrameButton>;
                         })
                     }
                 </View>

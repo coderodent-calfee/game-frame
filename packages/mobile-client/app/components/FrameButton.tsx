@@ -4,17 +4,18 @@ import {useAppContext} from "@/utils/AppContext";
 
 interface FrameButtonProps {
     title: string;
+    disabled : boolean;
     onPress: () => void;
 }
 
 
 
-const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress}, ref) => {
+const FrameButton: React.FC<FrameButtonProps> = ({ title, onPress, disabled}, ref) => {
     const { screenSize, appStyles } = useAppContext();
     const frameButtonStyles = screenSize.width < 500 ? smallStyles : screenSize.width < 1500 ? styles : largeStyles;
 
     return (
-        <TouchableOpacity ref={ref} style={frameButtonStyles.button} onPress={onPress} >
+        <TouchableOpacity ref={ref} disabled={disabled} style={[frameButtonStyles.button, disabled?{ backgroundColor: '#4B0000' }:{}]} onPress={onPress} >
             <Text style={[frameButtonStyles.buttonText, appStyles.largeText ]} numberOfLines={1}>{title}</Text>
         </TouchableOpacity>
     );
