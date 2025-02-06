@@ -33,8 +33,9 @@ interface GameInfoType {
 
 export default function Game() {
     const {
-        appStyles, 
+        appStyles,
         contextGetRequest,
+        contextPostRequest,
         screenSize, 
         sessionId, 
         setCurrentGameId,
@@ -122,7 +123,7 @@ export default function Game() {
         if(!player){
             return;
         }
-        makePostRequest<GameInfoType>({
+        contextPostRequest<GameInfoType>({
             path: `api/game/${gameId}/name/`,
             token,
             body: {
@@ -165,15 +166,20 @@ export default function Game() {
             }
             setGame(response.game);
             return response;
+        })
+        .catch((error) => {
+          console.log("getGameInfo failed:", error);
         });
-    };
+
+};
 
     const claimOrAddPlayer = async () => {
         setGamePlayerState("claim player");
-        return makePostRequest<GameInfoType>({
+        // todo: change the param to data
+        return contextPostRequest<GameInfoType>({
             path: `api/game/${gameId}/claim/`,
             token,
-            params: {
+            body: {
                 sessionId: sessionId
             }
         })
@@ -194,9 +200,14 @@ export default function Game() {
         })
         .catch((error) => {
             console.log('404 means no unclaimed players, so add a new player', error);
+            console.log('error.error:', error["error"]);
+            console.log('error.response.status:', error.response.status);
             // 404 means no unclaimed players, so add a new player
+            if (error.response.status != 404){
+                throw error;
+            }
             setGamePlayerState("adding player ");
-            return makePostRequest<GameInfoType>({
+            return contextPostRequest<GameInfoType>({
                 path: `api/game/${gameId}/add/`,
                 token,
                 body: {

@@ -47,6 +47,13 @@ export interface GetRequestOptions {
     params?: URLSearchParams | object;
 }
 
+export interface PostRequestOptions {
+    path: string;
+    token?: string;
+    body?: object | string;
+    params?: URLSearchParams | object;
+}
+
 export async function makeGetRequest<T>(
     {
         path,
@@ -73,13 +80,6 @@ export async function makeGetRequest<T>(
     };
     return makeRequest<T>(url, requestOptions);
 
-}
-
-interface PostRequestOptions {
-    path: string;                 
-    token?: string;            
-    body?: object | string;        
-    params?: URLSearchParams | object; 
 }
 
 export async function makePostRequest<T>(

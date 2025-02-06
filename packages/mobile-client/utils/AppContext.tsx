@@ -2,7 +2,7 @@
 import {Dimensions, Platform, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {closeSocket, handleSessionUser, startSocket} from "@/utils/socket";
-import {GetRequestOptions, makeGetRequest, makePostRequest} from "@/utils/requester";
+import {GetRequestOptions, makeGetRequest, makePostRequest, PostRequestOptions} from "@/utils/requester";
 import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEmitter";
 
 
@@ -10,23 +10,32 @@ import {EmitterSubscription} from "react-native/Libraries/vendor/emitter/EventEm
 // *** Interfaces
 // ***
 interface AppContextType {
+    appStyles: {
+        columnFlow: { flex: number; flexDirection: string }
+        largeText: { color: string; fontSize: number };
+        mediumText: { color: string; fontSize: number };
+        rowFlow: { flex: number; flexDirection: string };
+        smallText: { color: string; fontSize: number };
+        smallestText?: { color: string; fontSize: number };
+    };
+    contextGetRequest: (args: GetRequestOptions) => Promise<T>;
+    contextPostRequest: (args: PostRequestOptions) => Promise<T>;
+    currentGameId: string | undefined;
     getStoredJSON: (key: string) => Promise<object | null>;
     getStoredString: (key: string) => Promise<string | null>;
     removeStoredItem: (key: string) => Promise<void>;
-    screenSize: { width: number, height: number, corner:number };
-    sessionId: string | null;
-    setSessionId: (id: string | null) => void;
+    screenSize: { corner: number; width: number; scale: number; fontScale: number; height: number };
+    sessionId: string | undefined;
+    setCurrentGameId: (value: (((prevState: (string | undefined)) => (string | undefined)) | string | undefined)) => void;
+    setSessionId: (value: (((prevState: (string | undefined)) => (string | undefined)) | string | undefined)) => void;
     setStoredJSON: (key: string, value: object) => Promise<void>;
     setStoredString: (key: string, value: string) => Promise<void>;
-    setUserInfo: (info: any) => void;
+    setUserInfo: (value: any) => void;
+    signIn: ({access, refresh, userId}: JwtUserId) => boolean;
+    signOut: () => void;
+    token: string | undefined;
     userInfo: any;
-    appStyles: {
-        mediumText: { color: string, fontSize: number },
-        rowFlow: { flex: number, flexDirection: "row" },
-        largeText: { color: string, fontSize: number },
-        smallText: { color: string, fontSize: number },
-        columnFlow: { flex: number, flexDirection: "column" }
-    };
+
 }
 
 interface AuthenticatedSessionId {
@@ -52,6 +61,13 @@ export interface GameInfoType {
     message?: string;
     game: GameType;
     player?: Player;
+}
+
+
+interface JwtUserId {
+    access: string;
+    refresh: string;
+    userId?: string;
 }
 
 // ***
@@ -205,12 +221,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         });
     };
     
-
-    interface JwtUserId {
-        access: string;
-        refresh: string;
-        userId?: string;
-    }
+    const contextPostRequest = async (args: PostRequestOptions): Promise<T> => {
+        return makePostRequest<T>(args).catch((error)=>{
+            const code = error.response?.status;
+            if(code === 401 && jwtRefresh){
+                const newToken = refreshAuthToken();
+                const newArgs : PostRequestOptions = args;
+                newArgs['token'] = newToken;
+                return makePostRequest<T>(newArgs);
+            }else{
+                throw error;
+            }
+        });
+    };    
 
     const signIn = ({access, refresh, userId}:JwtUserId): boolean => {
         console.log('sign in: got token, refresh, and userId:', userId);
@@ -346,7 +369,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
                         // console.log("AuthenticatedSessionId failed:", error);
                         // console.log("AuthenticatedSessionId status code:", error.response?.status);
                         // if the response indicates that our token is expired, we can try to refresh it
-                        handleRefresh();
+                        handleRefresh().then(() => {
+                            handleSessionUser(sessionId, userInfo);
+                        });
                     });
             }
             else{
@@ -355,25 +380,29 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [ jwtRefresh, sessionId, currentGameId]);
 
-
-
-
     return (
-        <AppContext.Provider
-            value={{
+        <AppContext.Provider value={
+            {
                 appStyles,
                 contextGetRequest,
-                currentGameId, setCurrentGameId,
-                getStoredJSON, setStoredJSON,
-                getStoredString, setStoredString,
+                contextPostRequest,
+                currentGameId,
+                getStoredJSON,
+                getStoredString,
                 removeStoredItem,
                 screenSize,
-                sessionId, setSessionId,
-                signIn, signOut,
-                token, 
-                userInfo,  setUserInfo,
-            }}
-        >
+                sessionId,
+                setCurrentGameId,
+                setSessionId,
+                setStoredJSON,
+                setStoredString,
+                setUserInfo,
+                signIn,
+                signOut,
+                token,
+                userInfo,
+            }
+        }>
             {children}
         </AppContext.Provider>
     );

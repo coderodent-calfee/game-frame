@@ -37,7 +37,7 @@ interface JwtUserId {
 // ***
 
 export default function Index() {
-    const {signIn, signOut, token, appStyles, userInfo, setUserInfo, screenSize } = useAppContext();
+    const {contextPostRequest, signIn, signOut, token, appStyles, userInfo, setUserInfo, screenSize } = useAppContext();
 
     const router = useRouter();
 
@@ -134,7 +134,7 @@ export default function Index() {
             console.warn(`newGame: no JWT token`);
             return;
         }
-        makePostRequest<GameType>({
+        contextPostRequest<GameType>({
                 path: 'api/game/new/', 
                 token,
                 params : {

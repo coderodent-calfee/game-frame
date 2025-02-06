@@ -1,12 +1,11 @@
 ﻿import React, {useEffect, useState} from 'react';
-import {Dimensions, Image, StyleSheet, Text, TextInput, View} from "react-native";
+import {StyleSheet, Text, View} from "react-native";
 
 import FrameButton from "@/app/components/FrameButton";
 import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
-import {Link, Redirect, useRouter} from "expo-router";
+import {Redirect, useRouter} from "expo-router";
 import Logo from "@/app/components/Logo";
-import {makeGetRequest, makePostRequest} from "@/utils/requester";
 import {GameInfoType, GameType, useAppContext} from "@/utils/AppContext";
 import UserNameComponent from "@/app/components/UserNameComponent";
 
@@ -16,7 +15,7 @@ import UserNameComponent from "@/app/components/UserNameComponent";
 export default function Index() {
     const [game, setGame] = useState<GameType | undefined>();
     const [gameId, setGameId] = useState<string>();
-    const { token, sessionId, userInfo, setUserInfo ,screenSize, appStyles } = useAppContext();
+    const {contextGetRequest, token, sessionId, userInfo, setUserInfo ,screenSize, appStyles } = useAppContext();
     const [editUser, setEditUser] = useState<boolean>(false);
     const router = useRouter();
 
@@ -34,16 +33,22 @@ export default function Index() {
         if (!gameId || gameId.length !== 6) {
             return;
         }
-        makeGetRequest<GameInfoType>({ 
-            path : `api/game/${gameId}/info/` 
+        contextGetRequest<GameInfoType>({
+            path : `api/game/${gameId}/info/`,
+            token,
+            params : {
+                sessionId: sessionId
+            }
         })
         .then((response) => {
             if(!response.game){
                 return;
             }
             setGame(response.game);
-        }).catch((error) => {
+        })
+        .catch((error) => {
             console.log("GameInfo failed:", error);
+            // todo: under what circumstances do I go all the way back to login
         });
     }, [gameId]);
     
