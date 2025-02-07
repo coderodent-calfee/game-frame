@@ -7,7 +7,7 @@ import GameId from "@/app/components/GameId";
 import PageLayout from "@/app/components/PageLayout";
 import {Player, useAppContext} from "@/utils/AppContext";
 import Logo from "@/app/components/Logo";
-import {makePostRequest, MakeRequestError} from "@/utils/requester";
+import {MakeRequestError} from "@/utils/requester";
 import PlayerDisplay from "@/app/components/PlayerDisplay";
 import UserNameComponent from "@/app/components/UserNameComponent";
 import {clientMessage, handleSessionPlayer, socketEvents} from "@/utils/socket";
@@ -72,6 +72,23 @@ export default function Game() {
                     });
                     break;
                 }
+                case 'handle_session_player':{
+                    getGameInfo().catch((error) => {
+                        console.log("GameInfo failed:", error);
+                    });
+                    break;
+                }
+                case 'player_disconnected':{
+                    getGameInfo().catch((error) => {
+                        console.log("GameInfo failed:", error);
+                    });
+                    break;
+                }
+
+                default:{
+                    console.log("message not recognized:", data['type']);
+                    break;                    
+                }
             }
         };
 
@@ -119,7 +136,6 @@ export default function Game() {
 // ***
 
     const handleUserName = (info)=>{
-        // console.warn("handleUserName ", info);
         if(!player){
             return;
         }
@@ -144,10 +160,6 @@ export default function Game() {
         });
         
     };
-
-    // const isEmpty = (obj: object): boolean => {
-    //     return Object.keys(obj).length === 0;
-    // };
     
     const getGameInfo = async () => {
         return contextGetRequest<GameInfoType>({
@@ -264,16 +276,14 @@ export default function Game() {
         <PageLayout
             cornerSize={screenSize.corner}
             topLeftCorner={
-            <View>
-                {game && player && <PlayerDisplay 
-                    player={player} 
-                    onPress={toggleEditUser} 
-                    size={screenSize.corner} 
-                    playerNumber={1 + playerIndex}/>}
-                {!player && <Logo id="top-left-corner-icon"/>}
-            </View>
-
-
+                <View>
+                    {game && player && <PlayerDisplay 
+                        player={player} 
+                        onPress={toggleEditUser} 
+                        size={screenSize.corner} 
+                        playerNumber={1 + playerIndex}/>}
+                    {!player && <Logo id="top-left-corner-icon"/>}
+                </View>
             }
             topContent={
                 <View style={appStyles.rowFlow}>
@@ -321,25 +331,5 @@ export default function Game() {
 
     );
 }
-//
-// const styles = StyleSheet.create({
-//     text: {
-//         color: 'white',
-//         fontSize: 30,
-//     },
-//     image: {
-//         flex: 1,
-//     },
-//     icon: {
-//         flex: 1,
-//     },
-//     rowFlow: {
-//         flex: 1,
-//         flexDirection: 'row',
-//     },
-//     columnFlow: {
-//         flex: 1,
-//         flexDirection: 'column',
-//     },
-// });
+
 
